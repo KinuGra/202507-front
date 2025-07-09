@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "./Header";
 import BottomNav from "./BottomNav";
 import CharacterSelector from "./CharacterSelector";
@@ -15,7 +15,28 @@ export default function HomeClientLayout({ children }: HomeClientLayoutProps) {
   const [characterIcon, setCharacterIcon] = useState<string | null>(null);
   const [username, setUsername] = useState<string>("ゲスト");
 
+  useEffect(() => {
+    try {
+      const savedIcon = localStorage.getItem("characterIcon");
+      const savedUsername = localStorage.getItem("username");
+      if (savedIcon) {
+        setCharacterIcon(savedIcon);
+      }
+      if (savedUsername) {
+        setUsername(savedUsername);
+      }
+    } catch (error) {
+      console.error("Failed to load user data from localStorage", error);
+    }
+  }, []);
+
   const handleCharacterSelect = (icon: string, name: string) => {
+    try {
+      localStorage.setItem("characterIcon", icon);
+      localStorage.setItem("username", name);
+    } catch (error) {
+      console.error("Failed to save user data to localStorage", error);
+    }
     setCharacterIcon(icon);
     setUsername(name);
     setShowCharacterSelector(false);
