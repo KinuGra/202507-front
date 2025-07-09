@@ -1,29 +1,13 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import Header from "./components/Header";
-import BottomNav from "./components/BottomNav";
 import PushButton from "./components/PushButton";
-import CharacterSelector from "./components/CharacterSelector";
 
 export default function HomePage() {
-  const [showCharacterSelector, setShowCharacterSelector] = useState(false);
-  const [characterIcon, setCharacterIcon] = useState<string | null>(null);
-
-  const handleCharacterSelect = (icon: string) => {
-    setCharacterIcon(icon);
-    setShowCharacterSelector(false);
-  };
-
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <Header 
-        onIconClick={() => setShowCharacterSelector(true)}
-        characterIcon={characterIcon}
-      />
-      <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+    <>
+      <div className="p-4 text-center">
         <h1 className="text-4xl font-bold text-orange-500 mb-8">
           みんなで
           <br />
@@ -38,19 +22,7 @@ export default function HomePage() {
             ルーム参加
           </Button>
         </div>
-      </main>
-      <BottomNav />
-
-      {showCharacterSelector && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowCharacterSelector(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <CharacterSelector 
-              onSelectCharacter={handleCharacterSelect}
-              onClose={() => setShowCharacterSelector(false)}
-            />
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }
