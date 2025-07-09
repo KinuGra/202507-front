@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HomeClientLayout from "./components/HomeClientLayout";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -11,5 +12,14 @@ export default function HomeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <HomeClientLayout>{children}</HomeClientLayout>;
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <HomeClientLayout>{children}</HomeClientLayout>
+    </ThemeProvider>
+  );
 }

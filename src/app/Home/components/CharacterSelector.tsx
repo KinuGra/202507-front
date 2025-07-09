@@ -7,7 +7,7 @@ interface CharacterSelectorProps {
   onClose: () => void;
 }
 
-const CharacterSelector: React.FC<CharacterSelectorProps> = ({ onSelectCharacter, onClose }) => {
+export function CharacterSelector({ onSelectCharacter, onClose }: CharacterSelectorProps) {
   const [username, setUsername] = useState("");
   const availableCharacters = [
     "/images/avatars/person_avatar_1.png",
@@ -54,6 +54,4 @@ const CharacterSelector: React.FC<CharacterSelectorProps> = ({ onSelectCharacter
       </Button>
     </div>
   );
-};
-
-export default CharacterSelector;
+}

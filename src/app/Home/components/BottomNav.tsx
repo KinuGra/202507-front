@@ -5,7 +5,7 @@ import { Home, Users, Edit, FileText, Crown } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const BottomNav = () => {
+export function BottomNav() {
   const pathname = usePathname();
 
   const navItems = [
@@ -32,6 +32,4 @@ const BottomNav = () => {
       </div>
     </footer>
   );
-};
-
-export default BottomNav;
+}

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 
-const PushButton = () => {
+export function PushButton() {
   const [isPressed, setIsPressed] = useState(false);
 
   const handlePress = () => {
@@ -33,6 +33,4 @@ const PushButton = () => {
       ></div>
     </div>
   );
-};
-
-export default PushButton;
+}

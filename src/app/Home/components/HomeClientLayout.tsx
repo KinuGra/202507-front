@@ -2,9 +2,9 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import Header from "./Header";
-import BottomNav from "./BottomNav";
-import CharacterSelector from "./CharacterSelector";
+import { Header } from "./Header";
+import { BottomNav } from "./BottomNav";
+import { CharacterSelector } from "./CharacterSelector";
 
 interface HomeClientLayoutProps {
   children: React.ReactNode;

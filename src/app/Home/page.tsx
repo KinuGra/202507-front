@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { Button } from "@/components/ui/button";
-import PushButton from "./components/PushButton";
+import { PushButton } from "./components/PushButton";
 
 export default function HomePage() {
   return (
