@@ -1,28 +1,4 @@
-type quizdata = {
-  questionId: number,
-  quizId: number,
-  question: any,
-  answerLetters: string[],
-  answer_full: string,
-  category: null | string,
-  time: number, // ミリ秒
-}
-type userinfo = {
-  id: number;
-  username: string;
-};
-
-type userdata = {
-  user: userinfo[]; // 最大4人まで格納可能
-};
-
-// ⚠注意::::引数でuserが入っているためuserdataを参照するとき、props.user.userみたいな感じになる
-
-export function Quizscreen(props: { quizzes: quizdata[]; user: userdata }) {
-  // 最初のクイズのtimeを表示（必要に応じてロジック調整）
-  const time = props.quizzes.length > 0 ? props.quizzes[0].time : 0;
-  const playerCount = props.user.user.length;
-
+export function Quizscreen() {
   return (
     <div
       style={{
@@ -36,29 +12,77 @@ export function Quizscreen(props: { quizzes: quizdata[]; user: userdata }) {
         boxShadow: '0 4px 16px rgba(255,112,67,0.15)',
       }}
     >
-      {/* 画面上部情報 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', alignItems: 'flex-start' }}>
-        <div style={{ fontWeight: 'bold', fontSize: '1.2em' }}>プレイヤー数: {playerCount}</div>
-        <div style={{ display: 'flex', gap: '16px', marginLeft: '8px' }}>
-          {props.user.user.map((u) => (
-            <span
-              key={u.id}
-              style={{
-                background: 'rgba(255,255,255,0.18)',
-                borderRadius: '8px',
-                padding: '6px 16px',
-                fontWeight: 500,
-                letterSpacing: '0.05em',
-                boxShadow: '0 1px 4px rgba(255,167,38,0.10)',
-              }}
-            >
-              {u.username}
-            </span>
-          ))}
+      {/* プレイヤー画像＋名前 */}
+      <div style={{ display: 'flex', gap: '32px', justifyContent: 'center', marginBottom: '40px' }}>
+        {/* Alice */}
+        <div style={{ position: 'relative', width: '180px', height: '140px' }}>
+          <img
+            src="./asobu_cat_shadow.png"
+            alt="Alice"
+            style={{
+              width: '180px',
+              height: '140px',
+              objectFit: 'cover',
+              borderRadius: '18px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.13)',
+              background: '#eee',
+              display: 'block',
+            }}
+          />
+          <span
+            style={{
+              position: 'absolute',
+              left: 0,
+              bottom: 0,
+              width: '100%',
+              background: 'rgba(255,255,255,0.7)',
+              color: '#FF7043',
+              borderRadius: '0 0 18px 18px',
+              padding: '10px 0',
+              fontWeight: 700,
+              fontSize: '1.3em',
+              textAlign: 'center',
+              boxShadow: '0 2px 8px rgba(255,167,38,0.13)',
+            }}
+          >
+            Alice
+          </span>
         </div>
-        <div style={{ fontSize: '1em', marginTop: '4px' }}>time: {time} ms</div>
+        {/* Bob */}
+        <div style={{ position: 'relative', width: '180px', height: '140px' }}>
+          <img
+            src="./asobu_cat_shadow.png"
+            alt="Bob"
+            style={{
+              width: '180px',
+              height: '140px',
+              objectFit: 'cover',
+              borderRadius: '18px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.13)',
+              background: '#eee',
+              display: 'block',
+            }}
+          />
+          <span
+            style={{
+              position: 'absolute',
+              left: 0,
+              bottom: 0,
+              width: '100%',
+              background: 'rgba(255,255,255,0.7)',
+              color: '#FF7043',
+              borderRadius: '0 0 18px 18px',
+              padding: '10px 0',
+              fontWeight: 700,
+              fontSize: '1.3em',
+              textAlign: 'center',
+              boxShadow: '0 2px 8px rgba(255,167,38,0.13)',
+            }}
+          >
+            Bob
+          </span>
+        </div>
       </div>
-      {/* ...ここに他のクイズ画面要素... */}
       {/* クイズ問題表示 */}
       <div
         style={{
@@ -73,31 +97,27 @@ export function Quizscreen(props: { quizzes: quizdata[]; user: userdata }) {
           boxShadow: '0 2px 8px rgba(255,167,38,0.08)',
         }}
       >
-        {props.quizzes.length > 0 ? props.quizzes[0].question : 'No question'}
+        富士山の標高は何メートル？
       </div>
-      {/* 正解候補（answerLetters）表示 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-        {props.quizzes.length > 0 &&
-          props.quizzes[0].answerLetters.map((letter, idx) => (
-            <span
-              key={idx}
-              style={{
-                background: '#fff',
-                color: '#FF7043',
-                borderRadius: '8px',
-                padding: '10px 18px',
-                fontWeight: 700,
-                fontSize: '1.1em',
-                boxShadow: '0 1px 4px rgba(255,167,38,0.10)',
-                cursor: 'pointer',
-                userSelect: 'none',
-                border: '2px solid #FFA726',
-                transition: 'background 0.2s',
-              }}
-            >
-              {letter}
-            </span>
-          ))}
+      {/* 答え入力フィールド */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '12px' }}>
+        <input
+          type="text"
+          placeholder="ここに答えを入力"
+          style={{
+            width: '80%',
+            padding: '12px',
+            borderRadius: '8px',
+            border: '2px solid #FFA726',
+            fontSize: '1.1em',
+            fontWeight: 600,
+            color: '#FF7043',
+            outline: 'none',
+            boxShadow: '0 1px 4px rgba(255,167,38,0.10)',
+            marginBottom: '8px',
+          }}
+        />
+        {/* 必要なら送信ボタンなど追加可能 */}
       </div>
     </div>
   );
