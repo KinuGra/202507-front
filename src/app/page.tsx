@@ -1,9 +1,9 @@
-import Image from "next/image";
+import LoginButton from "@/components/LoginButton";
 
 export default function Home() {
   return (
-    <>
-      ログイン画面
-    </>
+    <main className="flex min-h-screen items-center justify-center">
+        <LoginButton />
+    </main>
   );
 }
