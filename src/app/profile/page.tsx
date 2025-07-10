@@ -1,5 +1,6 @@
 // app/profile/page.tsx
 import { verifyIdToken } from "@/app/actions/verify";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
@@ -24,6 +25,15 @@ export default async function ProfilePage() {
         <p className="text-sm text-gray-500">
           トークン有効期限 (exp): {new Date(user.exp * 1000).toLocaleString()}
         </p>
+      </section>
+
+      <section className="mt-8">
+        <a
+          href="/auth/passkey/add"
+          className="inline-block rounded bg-blue-600 px-4 py-2 text-white"
+        >
+          パスキーを追加
+        </a>
       </section>
     </main>
   );
