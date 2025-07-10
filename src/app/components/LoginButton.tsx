@@ -3,7 +3,7 @@
 // Cognito の OAuth2 認証を利用する
 "use client";
 
-import { createPKCE } from "@/lib/pkce";
+import { createPKCE } from "@/app/lib/pkce";
 import Cookies from "js-cookie";
 
 export default function LoginButton() {
