@@ -1,3 +1,6 @@
+// ログインボタンのコンポーネント
+// PKCE（Proof Key for Code Exchange）を使用して、認可コードフローでログインを行う
+// Cognito の OAuth2 認証を利用する
 "use client";
 
 import { createPKCE } from "@/lib/pkce";
@@ -30,6 +33,7 @@ export default function LoginButton() {
     window.location.href =
       `${process.env.NEXT_PUBLIC_COG_DOMAIN!}/oauth2/authorize?` + params;
   };
+
 
   return (
     <button
