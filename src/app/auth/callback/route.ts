@@ -1,5 +1,13 @@
 // app/auth/callback/route.ts
 // ログイン後の認証セッション発行 (cookies-next 版)
+// 処理内容
+// 1. code クエリパラメータの存在チェック
+// 2. PKCE verifier の取得 (cookies-next)
+// 3. /oauth2/token へ code と verifier を送信してトークン交換
+// 4. id_token の署名と aud の検証
+// 5. セッションクッキーを発行し、PKCE verifier を削除
+// 6. 認証後のリダイレクト(/profile)
+
 
 import { NextRequest, NextResponse } from "next/server";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
@@ -88,8 +96,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "jwt invalid" }, { status: 401 });
   }
 
-  /* ❺ セッションクッキー発行 & verifier 削除（cookies-next で設定） */
-  const res = NextResponse.redirect(new URL("/cookie-test", req.url));
+  /* ❺ セッションクッキー発行 & verifier 削除（profile で設定） */
+  const res = NextResponse.redirect(new URL("/profile", req.url));
 
   // HttpOnly な認証セッション
   await setCookie("id_token", id_token, {
