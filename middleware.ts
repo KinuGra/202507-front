@@ -18,6 +18,7 @@ async function verifyJwt(token: string): Promise<JWTPayload | null> {
       issuer:   `https://cognito-idp.${region}.amazonaws.com/${poolId}`,
       audience: clientId,
     });
+    console.log("無事ミドルウェア通過ですね！！");
     return payload;
   } catch {
     return null;
@@ -26,13 +27,14 @@ async function verifyJwt(token: string): Promise<JWTPayload | null> {
 
 /* --- ③ 共通リダイレクト ----------------------------------------------------- */
 function redirectToLogin(req: NextRequest) {
-  const res = NextResponse.redirect(new URL("/login", req.url));
+  const res = NextResponse.redirect(new URL("/", req.url));
   res.cookies.set("id_token", "", { maxAge: 0, path: "/" });
   return res;
 }
 
 /* --- ④ Edge Middleware 本体 -------------------------------------------------- */
 export async function middleware(req: NextRequest) {
+  console.log("ミドルウェアが動いたよ:", req.method, req.nextUrl.pathname);
   const { pathname } = req.nextUrl;
 
   /* 1) 静的アセットと除外パスは即通過 */
@@ -60,5 +62,5 @@ export async function middleware(req: NextRequest) {
 
 /* --- ⑤ 適用パス ------------------------------------------------------------- */
 export const config = {
-  matcher: ["/((?!.*\\.).*)"], // 拡張子付きファイルを除外しても良い場合
+  matcher: ["/(.*)"], 
 };
