@@ -1,11 +1,9 @@
-import Image from "next/image";
-import { Quizscreen } from './components/quizScreen';
+import LoginButton from "@/app/components/LoginButton";
 
 export default function Home() {
   return (
-    <>
-      <Quizscreen />
-      ログイン画面
-    </>
+    <main className="flex min-h-screen items-center justify-center">
+        <LoginButton />
+    </main>
   );
 }
