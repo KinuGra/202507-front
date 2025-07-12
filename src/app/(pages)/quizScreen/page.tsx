@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { PushButton } from "@/app/(pages)/Home/components/PushButton";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // --- Type Definitions ---
 interface Participant {
@@ -70,6 +72,7 @@ const QuizScreenPage = () => {
   const [userAnswer, setUserAnswer] = useState("");
   const [choices, setChoices] = useState<string[]>([]);
 
+  const router = useRouter();
   const currentQuestion = quizQuestions[currentQuestionIndex];
   const thisPlayer = playerScores[0];
 
@@ -139,7 +142,11 @@ const QuizScreenPage = () => {
       const timer = setTimeout(handleNextQuestion, 2000);
       return () => clearTimeout(timer);
     }
-  }, [gamePhase, handleRetry, handleNextQuestion]);
+    if (gamePhase === "finished") {
+        const timer = setTimeout(() => router.push('/resultScreen'), 2000);
+        return () => clearTimeout(timer);
+    }
+  }, [gamePhase, handleRetry, handleNextQuestion, router]);
 
   const handleStartAnswering = () => {
     setIsTimerActive(false);
@@ -236,7 +243,7 @@ const QuizScreenPage = () => {
                                 <AlertTitle className="font-bold">
                                     {gamePhase === "correct" && "正解 (Correct)!"}
                                     {gamePhase === "incorrect" && "不正解 (Incorrect)!"}
-                                    {gamePhase === "finished" && "Quiz Complete!"}
+                                    {gamePhase === "finished" && <Link href="/resultScreen">Quiz Complete!</Link>}
                                 </AlertTitle>
                             </Alert>
                         )}
