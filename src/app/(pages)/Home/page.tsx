@@ -23,6 +23,20 @@ export default function HomePage() {
       quizId: 1,
     });
 
+    try {
+      const res = await fetch('/api/game/insert-rp', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          roomId: id,
+          uuid: uuid,
+          currentScore: 0
+        })
+      })
+    } catch (e) { console.log(e) }
+
     router.push(`/Room/CreateRoom?roomId=${id}`);
   };
 
@@ -40,7 +54,10 @@ export default function HomePage() {
       },
       body: JSON.stringify(roomData),
     });
-    return res.json();
+    const data = await res.json();
+    console.log("api/game/create-room", data);
+    localStorage.setItem("roomIdPK", data.foundRoom.id);
+    return data;
   }
 
   return (

@@ -6,11 +6,15 @@ export async function POST(req: Request) {
         status,
         currentSeq,
         quizId,
-        created_at
+        created_at,
+        uuid,
+        currentScore
     } = await req.json();
 
     const djangoUrl = process.env.DJANGO_API_URL;
 
+    // ルーム作成
+    let createdRoom = null;
     try {
         const res = await fetch(`${djangoUrl}/api/rooms/`, {
             method: "POST",
@@ -26,12 +30,44 @@ export async function POST(req: Request) {
         });
 
         if (res.ok) {
-            const result = await res.json();
-            console.log(result);
+            createdRoom = await res.json();
         }
     } catch (e) {
-        console.log(e);
+        return NextResponse.json({ message: "ルーム作成失敗", error: String(e) }, { status: 500 });
     }
 
-    return NextResponse.json({ message: "受け取り完了"});
+    // 全件GETしてroomId一致のものを検索
+    let foundRoom = null;
+    try {
+        const res = await fetch(`${djangoUrl}/api/rooms/`);
+        if (res.ok) {
+            const rooms = await res.json();
+            foundRoom = rooms.find((room: any) => room.roomId === roomId);
+        }
+    } catch (e) {
+        return NextResponse.json({ message: "ルーム検索失敗", error: String(e) }, { status: 500 });
+    }
+
+    // room-participantテーブルにレコード作成
+    let participantResult = null;
+    try {
+        const res = await fetch("http://localhost:3000/api/insert-rp/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                roomId: foundRoom ? foundRoom.id : null, // PK
+                uuid: uuid,
+                currentScore: currentScore
+            }),
+        });
+        if (res.ok) {
+            participantResult = await res.json();
+        }
+    } catch (e) {
+        return NextResponse.json({ message: "room-participant作成失敗", error: String(e) }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: "受け取り完了", createdRoom, foundRoom, participantResult });
 }
