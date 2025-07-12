@@ -2,25 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { mockGenres, Genre } from "../CreateRoom/mock-genres";
-
-// Helper function to generate a random room ID
-export function generateRoomId(): string {
-  return Math.random().toString(36).substring(2, 10);
-}
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
+// import { Switch } from "@/components/ui/switch";
+// import { mockGenres, Genre } from "../CreateRoom/mock-genres";
+import { createRoomId } from "@/app/features/createRoomId";
 
 interface User {
   name: string;
@@ -40,23 +37,27 @@ interface RoomDetailsProps {
 }
 
 export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
-  const [roomId, setRoomId] = useState(initialRoomId || "");
-  const [userGenres, setUserGenres] = useState<Genre[]>([]);
-  const [showUserGenres, setShowUserGenres] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
-  const [numProblems, setNumProblems] = useState(10);
+  const searchParams = useSearchParams();
+  const queryRoomId = searchParams.get("roomId");
+  const [roomId, setRoomId] = useState(queryRoomId || initialRoomId || "");
+  // const [userGenres, setUserGenres] = useState<Genre[]>([]);
+  // const [showUserGenres, setShowUserGenres] = useState(false);
+  // const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
+  // const [numProblems, setNumProblems] = useState(10);
   const [participants, setParticipants] = useState<User[]>(mockUsers);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   useEffect(() => {
-    if (isHost) {
-      setRoomId(generateRoomId());
+    // クエリパラメータが変わった場合もroomIdを更新
+    if (queryRoomId && queryRoomId !== roomId) {
+      setRoomId(queryRoomId);
     }
-    
+
     try {
-      const savedGenres = localStorage.getItem('problem-genres');
-      if (savedGenres) {
-        setUserGenres(JSON.parse(savedGenres));
-      }
+      // const savedGenres = localStorage.getItem('problem-genres');
+      // if (savedGenres) {
+      //   setUserGenres(JSON.parse(savedGenres));
+      // }
 
       const savedUsername = localStorage.getItem("username");
       const savedIcon = localStorage.getItem("characterIcon");
@@ -76,24 +77,24 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
     }
-  }, [isHost]);
+  }, [isHost, queryRoomId, hasGenerated]);
 
-  const displayedGenres = showUserGenres ? userGenres : mockGenres;
+  // const displayedGenres = showUserGenres ? userGenres : mockGenres;
 
-  const handleGenreChange = (value: string) => {
-    const genre = displayedGenres.find(g => g.id.toString() === value);
-    setSelectedGenre(genre || null);
-    setNumProblems(10); 
-  };
+  // const handleGenreChange = (value: string) => {
+  //   const genre = displayedGenres.find(g => g.id.toString() === value);
+  //   setSelectedGenre(genre || null);
+  //   setNumProblems(10); 
+  // };
 
-  const handleNumProblemsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (selectedGenre && value > selectedGenre.problems.length) {
-      setNumProblems(selectedGenre.problems.length);
-    } else {
-      setNumProblems(value);
-    }
-  };
+  // const handleNumProblemsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = parseInt(e.target.value, 10);
+  //   if (selectedGenre && value > selectedGenre.problems.length) {
+  //     setNumProblems(selectedGenre.problems.length);
+  //   } else {
+  //     setNumProblems(value);
+  //   }
+  // };
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -111,6 +112,7 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
           </div>
         </div>
 
+        {/*
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>カテゴリ</Label>
@@ -146,6 +148,7 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
           />
           {selectedGenre && <p className="text-sm text-muted-foreground">最大: {selectedGenre.problems.length}</p>}
         </div>
+        */}
 
         <div className="space-y-4">
           <h3 className="text-lg font-medium">参加者</h3>

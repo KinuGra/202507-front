@@ -36,7 +36,7 @@ const CreateProblemPage = () => {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
+
   // LocalStorageからデータを読み込む
   useEffect(() => {
     try {
