@@ -3,18 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,20 +94,23 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
     const channel = pusher.subscribe(`room-${roomId}`);
 
     // 他のユーザーの参加イベント
-    channel.bind("user-joined", (data: {
-      username: string;
-      roomId: string;
-      uuid: string;
-      icon: string | null;
-      joined_at: string;
-    }) => {
-      const displayName = (data.username || "").trim() || "ゲスト";
-      setParticipants((prev) =>
-        prev.some((p) => p.uuid === data.uuid)
-          ? prev
-          : [...prev, { uuid: data.uuid, name: displayName, icon: data.icon }]
-      );
-    });
+    channel.bind(
+      "user-joined",
+      (data: {
+        username: string;
+        roomId: string;
+        uuid: string;
+        icon: string | null;
+        joined_at: string;
+      }) => {
+        const displayName = (data.username || "").trim() || "ゲスト";
+        setParticipants((prev) =>
+          prev.some((p) => p.uuid === data.uuid)
+            ? prev
+            : [...prev, { uuid: data.uuid, name: displayName, icon: data.icon }]
+        );
+      }
+    );
 
     // 自分の参加を通知
     const notifyJoin = async () => {
@@ -158,10 +151,7 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
           <Label htmlFor="room-id">ルームID</Label>
           <div className="flex items-center space-x-2">
             <Input id="room-id" value={roomId} readOnly />
-            <Button
-              onClick={() => navigator.clipboard.writeText(roomId)}
-              disabled={!isHost}
-            >
+            <Button onClick={() => navigator.clipboard.writeText(roomId)} disabled={!isHost}>
               IDをコピー
             </Button>
           </div>
@@ -176,12 +166,8 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
               return (
                 <div key={user.uuid} className="flex flex-col items-center space-y-1">
                   <Avatar>
-                    {user.icon && (
-                      <AvatarImage src={user.icon} alt={displayName} />
-                    )}
-                    <AvatarFallback>
-                      {displayName.charAt(0) || "G"}
-                    </AvatarFallback>
+                    {user.icon && <AvatarImage src={user.icon} alt={displayName} />}
+                    <AvatarFallback>{displayName.charAt(0) || "G"}</AvatarFallback>
                   </Avatar>
                   <span>{displayName}</span>
                 </div>
@@ -195,7 +181,12 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
         <Link href={isHost ? "/Home" : "/Room/JoinRoom"}>
           <Button variant="outline">キャンセル</Button>
         </Link>
-        {isHost && <Button>スタート</Button>}
+        {isHost && (
+          <Button>
+            {" "}
+            <Link href="/quizScreen">スタート</Link>
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
