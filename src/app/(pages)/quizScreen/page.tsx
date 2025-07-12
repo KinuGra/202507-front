@@ -7,8 +7,25 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { PushButton } from "@/app/(pages)/Home/components/PushButton";
-import { useQuizWebSocket } from "@/app/hooks/useQuizWebSocket";
-import { Participant, PlayerScore } from "@/app/types/quiz";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+// --- Type Definitions ---
+interface Participant {
+  name: string;
+  avatarUrl: string;
+  score: number;
+}
+
+interface QuizQuestion {
+  question: string;
+  correctAnswer: string;
+}
+
+interface PlayerScore {
+  name: string;
+  score: number;
+}
 
 // --- Mock Data ---
 const participants: Participant[] = [
@@ -42,18 +59,20 @@ const QuizScreenPage = () => {
   const { gameState, isConnected, startGame, submitAnswer } = useQuizWebSocket(roomId, userId);
   
   // --- State ---
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [playerScores, setPlayerScores] = useState<PlayerScore[]>(participants.map((p) => ({ name: p.name, score: 0 })));
   const [timeLeft, setTimeLeft] = useState(60);
   const [isTimerActive, setIsTimerActive] = useState(true);
   const [displayedQuestion, setDisplayedQuestion] = useState("");
   const [gamePhase, setGamePhase] = useState("question");
   const [isTypewriterActive, setIsTypewriterActive] = useState(true);
-  const [currentAnswerer, setCurrentAnswerer] = useState<PlayerScore | null>(null);
+  const [currentAnswerer, setCurrentAnswerer] = useState<LocalPlayerScore | null>(null);
   const [currentAnswerIndex, setCurrentAnswerIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [choices, setChoices] = useState<string[]>([]);
 
-  const currentQuestion = gameState.currentQuestion;
+  const router = useRouter();
+  const currentQuestion = quizQuestions[currentQuestionIndex];
   const thisPlayer = playerScores[0];
   
   // Update displayed question when WebSocket question changes
@@ -121,7 +140,11 @@ const QuizScreenPage = () => {
       const timer = setTimeout(handleNextQuestion, 2000);
       return () => clearTimeout(timer);
     }
-  }, [gamePhase, handleRetry, handleNextQuestion]);
+    if (gamePhase === "finished") {
+        const timer = setTimeout(() => router.push('/resultScreen'), 2000);
+        return () => clearTimeout(timer);
+    }
+  }, [gamePhase, handleRetry, handleNextQuestion, router]);
 
   const handleStartAnswering = () => {
     if (!currentQuestion) return;
@@ -223,7 +246,7 @@ const QuizScreenPage = () => {
                                 <AlertTitle className="font-bold">
                                     {gamePhase === "correct" && "正解 (Correct)!"}
                                     {gamePhase === "incorrect" && "不正解 (Incorrect)!"}
-                                    {gamePhase === "finished" && "Quiz Complete!"}
+                                    {gamePhase === "finished" && <Link href="/resultScreen">Quiz Complete!</Link>}
                                 </AlertTitle>
                             </Alert>
                         )}

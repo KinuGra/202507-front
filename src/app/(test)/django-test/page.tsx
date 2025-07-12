@@ -34,6 +34,24 @@ export default function TestPage() {
         }
     }
 
+    const handlerp = async () => {
+        try {
+            const res = await fetch("/api/game/insert-rp", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    roomId: 2,
+                    uuid: 3,
+                    currentScore: 2,
+                }),
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     return (
         <>
             <ul>
@@ -52,6 +70,8 @@ export default function TestPage() {
                     roomId: {roomId}は{roomExists ? "存在する" : "存在しない"}
                 </div>
             </div>
+
+            <button onClick={handlerp}>ボタン</button>
 
         </>
     )
