@@ -8,7 +8,7 @@ export default function GuestButton() {
     <Link
       href="/profile"      // サーバーリダイレクト用ルート
       prefetch={false}         // 外部遷移と同様にプリフェッチさせない
-      className="inline-block rounded border px-4 py-2"
+      className="w-full text-center rounded border px-4 py-4"
     >
       ゲストとして入る
     </Link>
