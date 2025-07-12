@@ -53,6 +53,53 @@ export default function JoinRoomPage() {
         setError("ルーム参加に失敗しました。");
         return;
       }
+
+      // ユーザー作成
+      try {
+        const res = await fetch("/api/game/create-user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            uuid: uuid,
+            username: localStorage.getItem("username"),
+            icon: localStorage.getItem("icon"),
+            loginId: uuid,
+            password: "default",
+          }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          console.error("create-user 失敗:", error);
+        }
+      } catch (e) {
+        console.error("create-user 通信エラー:", e);
+      }
+
+      // 参加者登録
+      try {
+        const res = await fetch("/api/game/insert-rp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            roomId: roomIdInput,
+            uuid: uuid,
+            currentScore: 0,
+          }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          console.error("insert-rp 失敗:", error);
+        }
+      } catch (e) {
+        console.error("insert-rp 通信エラー:", e);
+      }
+
       // 3. 待機画面へ遷移
       router.push(`/Room/WaitingRoom?roomId=${roomIdInput}`);
     } catch (err) {
