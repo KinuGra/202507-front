@@ -1,9 +1,21 @@
-import React from 'react';
+import { verifyIdToken } from "@/app/actions/verify";
+import FriendPageClient from "./FriendPageClient";
 
-export default function FriendPage() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold">フレンド</h1>
-    </div>
-  );
+export default async function FriendPage() {
+  // サーバーサイドで認証情報を取得
+  const token = await verifyIdToken();
+
+  if (!token) {
+    // トークンがない場合（未ログイン状態）はクライアントにnullを渡す
+    return <FriendPageClient user={null} />;
+  }
+
+  // ユーザー情報を整形 (iconは削除)
+  const userProfile = {
+    uuid: token.sub,
+    username: token.name,
+  };
+
+  // クライアントコンポーネントにユーザー情報を渡してレンダリング
+  return <FriendPageClient user={userProfile} />;
 }
