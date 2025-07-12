@@ -71,14 +71,17 @@ const QuizScreenPage = () => {
   const [isTimerActive, setIsTimerActive] = useState(true);
   const [displayedQuestion, setDisplayedQuestion] = useState("");
   const [gamePhase, setGamePhase] = useState("question"); // 'question', 'answering', 'correct', 'incorrect', 'finished'
+  const [currentAnswerer, setCurrentAnswerer] = useState<PlayerScore | null>(null);
   const [currentAnswerIndex, setCurrentAnswerIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [choices, setChoices] = useState<string[]>([]);
 
   const currentQuestion = quizQuestions[currentQuestionIndex];
+  const thisPlayer = playerScores[0]; // Assuming this browser is for "Player 1"
 
   // --- Handlers ---
   const handleRetry = useCallback(() => {
+    setCurrentAnswerer(null); // Release the lock
     setGamePhase("question");
     setIsTimerActive(true); // Resume timer
     setUserAnswer("");
@@ -86,77 +89,70 @@ const QuizScreenPage = () => {
   }, []);
 
   const handleNextQuestion = useCallback(() => {
-    // For now, we'll just add points to the first player for simplicity
-    const newScores = [...playerScores];
-    newScores[0].score += 10;
-    setPlayerScores(newScores);
+    if (currentAnswerer) {
+      const newScores = playerScores.map((p) =>
+        p.name === currentAnswerer.name ? { ...p, score: p.score + 10 } : p
+      );
+      setPlayerScores(newScores);
+    }
 
     const nextQuestionIndex = currentQuestionIndex + 1;
     if (nextQuestionIndex < quizQuestions.length) {
       setCurrentQuestionIndex(nextQuestionIndex);
       setUserAnswer("");
       setCurrentAnswerIndex(0);
+      setCurrentAnswerer(null);
       setGamePhase("question");
       setIsTimerActive(true);
-      setTimeLeft(60); // Reset timer for next question
+      setTimeLeft(60);
     } else {
       setGamePhase("finished");
     }
-  }, [currentQuestionIndex, playerScores]);
+  }, [currentAnswerer, currentQuestionIndex, playerScores]);
 
   // --- Effects ---
-  // Timer effect
   useEffect(() => {
     if (!isTimerActive || timeLeft === 0) return;
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => prevTime - 1);
-    }, 1000);
+    const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, isTimerActive]);
 
-  // Typewriter effect for the question
   useEffect(() => {
     if (!currentQuestion) return;
     setDisplayedQuestion("");
-    const fullQuestion = currentQuestion.question;
     let index = 0;
     const interval = setInterval(() => {
-      setDisplayedQuestion((prev) => prev + fullQuestion.charAt(index));
+      setDisplayedQuestion((prev) => prev + currentQuestion.question.charAt(index));
       index++;
-      if (index === fullQuestion.length) clearInterval(interval);
+      if (index === currentQuestion.question.length) clearInterval(interval);
     }, 50);
     return () => clearInterval(interval);
   }, [currentQuestion]);
 
-  // Auto-advance on correct/incorrect answer
   useEffect(() => {
     if (gamePhase === "incorrect") {
-      const timer = setTimeout(() => {
-        handleRetry();
-      }, 2000); // Auto-retry after 2 seconds
+      const timer = setTimeout(() => handleRetry(), 2000);
       return () => clearTimeout(timer);
     }
     if (gamePhase === "correct") {
-      const timer = setTimeout(() => {
-        handleNextQuestion();
-      }, 2000); // Auto-proceed after 2 seconds
+      const timer = setTimeout(() => handleNextQuestion(), 2000);
       return () => clearTimeout(timer);
     }
   }, [gamePhase, handleRetry, handleNextQuestion]);
 
   const handleStartAnswering = () => {
     setIsTimerActive(false);
+    setCurrentAnswerer(thisPlayer);
     setGamePhase("answering");
     setChoices(generateChoices(currentQuestion.correctAnswer[0]));
   };
 
   const handleChoiceClick = (char: string) => {
-    if (gamePhase !== "answering") return;
+    if (gamePhase !== "answering" || currentAnswerer?.name !== thisPlayer.name) return;
 
     if (char === currentQuestion.correctAnswer[currentAnswerIndex]) {
       const nextUserAnswer = userAnswer + char;
       setUserAnswer(nextUserAnswer);
-
       if (nextUserAnswer === currentQuestion.correctAnswer) {
         setGamePhase("correct");
       } else {
@@ -210,6 +206,11 @@ const QuizScreenPage = () => {
           </div>
 
           <div className="p-4 text-center">
+            {currentAnswerer && (
+              <div className="mb-2 text-lg">
+                Answering: <span className="font-bold">{currentAnswerer.name}</span>
+              </div>
+            )}
             <div className="text-4xl font-bold tracking-widest min-h-[4rem] mb-4 border-b-2 pb-2">
               {userAnswer || "　"}
             </div>
@@ -220,6 +221,7 @@ const QuizScreenPage = () => {
                   <Button
                     key={char}
                     onClick={() => handleChoiceClick(char)}
+                    disabled={currentAnswerer?.name !== thisPlayer.name}
                     className="text-2xl h-16"
                   >
                     {char}
@@ -230,29 +232,22 @@ const QuizScreenPage = () => {
             {gamePhase === "correct" && (
               <Alert variant="default" className="bg-green-100 border-green-400">
                 <AlertTitle className="text-green-800 font-bold">正解 (Correct)!</AlertTitle>
-                <AlertDescription className="text-green-700">
-                  You answered correctly! +10 points
-                </AlertDescription>
               </Alert>
             )}
             {gamePhase === "incorrect" && (
               <Alert variant="destructive">
                 <AlertTitle className="font-bold">不正解 (Incorrect)!</AlertTitle>
-                <AlertDescription>That was not the right character. Resuming...</AlertDescription>
               </Alert>
             )}
             {gamePhase === "finished" && (
               <Alert>
                 <AlertTitle className="font-bold">Quiz Complete!</AlertTitle>
-                <AlertDescription>
-                  Thanks for playing. Check the final scores above.
-                </AlertDescription>
               </Alert>
             )}
           </div>
         </Card>
 
-        {gamePhase === "question" && (
+        {gamePhase === "question" && !currentAnswerer && (
           <div className="absolute bottom-8">
             <PushButton onClick={handleStartAnswering} />
           </div>
