@@ -62,5 +62,5 @@ export async function middleware(req: NextRequest) {
 
 /* --- ⑤ 適用パス ------------------------------------------------------------- */
 export const config = {
-  matcher: ["/(.*)"], 
+  matcher: ["/auth/:path*"], // /auth 配下のみ
 };
