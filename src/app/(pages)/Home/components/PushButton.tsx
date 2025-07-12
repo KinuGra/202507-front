@@ -1,12 +1,15 @@
 "use client";
 import React, { useState } from "react";
 
-export function PushButton() {
+export function PushButton({ onClick }) {
   const [isPressed, setIsPressed] = useState(false);
 
   const handlePress = () => {
     setIsPressed(true);
     setTimeout(() => setIsPressed(false), 200); // Reset after 200ms
+    if (onClick) {
+      onClick();
+    }
   };
 
   return (
