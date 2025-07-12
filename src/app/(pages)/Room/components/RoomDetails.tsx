@@ -8,43 +8,33 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
-// import { Switch } from "@/components/ui/switch";
-// import { mockGenres, Genre } from "../CreateRoom/mock-genres";
 import { createRoomId } from "@/app/features/createRoomId";
+import { pusherClient } from "@/app/lib/pusher/client";
 
 interface User {
   name: string;
   icon: string | null;
+  uuid: string;
 }
 
 // Mock user data
 export const mockUsers: User[] = [
-  { name: "User 1", icon: "/images/avatars/person_avatar_1.png" },
-  { name: "User 2", icon: "/images/avatars/person_avatar_2.png" },
-  { name: "User 3", icon: "/images/avatars/person_avatar_3.png" },
+  { name: "User 1", icon: "/images/avatars/person_avatar_1.png", uuid: "mock-uuid-1" },
+  { name: "User 2", icon: "/images/avatars/person_avatar_2.png", uuid: "mock-uuid-2" },
+  { name: "User 3", icon: "/images/avatars/person_avatar_3.png", uuid: "mock-uuid-3" },
 ];
 
 interface RoomDetailsProps {
   isHost: boolean;
   initialRoomId?: string;
+  users?: {};
 }
 
-export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
+export function RoomDetails({ isHost, initialRoomId, users = {} }: RoomDetailsProps) {
   const searchParams = useSearchParams();
   const queryRoomId = searchParams.get("roomId");
   const [roomId, setRoomId] = useState(queryRoomId || initialRoomId || "");
-  // const [userGenres, setUserGenres] = useState<Genre[]>([]);
-  // const [showUserGenres, setShowUserGenres] = useState(false);
-  // const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
-  // const [numProblems, setNumProblems] = useState(10);
-  const [participants, setParticipants] = useState<User[]>(mockUsers);
+  const [participants, setParticipants] = useState<User[]>([]);
   const [hasGenerated, setHasGenerated] = useState(false);
 
   useEffect(() => {
@@ -54,47 +44,88 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
     }
 
     try {
-      // const savedGenres = localStorage.getItem('problem-genres');
-      // if (savedGenres) {
-      //   setUserGenres(JSON.parse(savedGenres));
-      // }
-
       const savedUsername = localStorage.getItem("username");
-      const savedIcon = localStorage.getItem("characterIcon");
+      const savedIcon = localStorage.getItem("characterIcon"); // キーを統一
+      const savedUuid = localStorage.getItem("uuid");
       const currentUser: User = {
         name: savedUsername || "ゲスト",
         icon: savedIcon,
+        uuid: savedUuid || "",
       };
-
       setParticipants(prevParticipants => {
-        const userExists = prevParticipants.some(p => p.name === currentUser.name);
-        if (userExists) {
-          return prevParticipants.map(p => p.name === currentUser.name ? currentUser : p);
+        // uuidで重複排除
+        if (prevParticipants.some(p => p.uuid === currentUser.uuid)) {
+          return prevParticipants;
         }
-        return [currentUser, ...prevParticipants];
+        return [...prevParticipants, currentUser];
       });
-
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
     }
   }, [isHost, queryRoomId, hasGenerated]);
 
-  // const displayedGenres = showUserGenres ? userGenres : mockGenres;
+    const handleJoin = async () => {
+        try {
+            await fetch("/api/game/join-room", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  username: localStorage.getItem("username"),
+                  roomId,
+                  uuid: localStorage.getItem("uuid"),
+                  icon: localStorage.getItem("icon"),
+                  joined_at: new Date().toISOString(),
+                }),
+            });
+        } catch (e) {
+            console.log(e);
+        }
+    }
 
-  // const handleGenreChange = (value: string) => {
-  //   const genre = displayedGenres.find(g => g.id.toString() === value);
-  //   setSelectedGenre(genre || null);
-  //   setNumProblems(10); 
-  // };
+    useEffect(() => {
+        if (!roomId) return;
 
-  // const handleNumProblemsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const value = parseInt(e.target.value, 10);
-  //   if (selectedGenre && value > selectedGenre.problems.length) {
-  //     setNumProblems(selectedGenre.problems.length);
-  //   } else {
-  //     setNumProblems(value);
-  //   }
-  // };
+        // Pusherクライアントの初期化
+        const pusher = pusherClient;
+        // チャンネル購読
+        const channel = pusher.subscribe(`room-${roomId}`);
+
+        // イベント受信
+        channel.bind('user-joined', (data: {
+      username: string,
+      roomId: string,
+      uuid: string,
+      icon: string,
+      joined_at: string
+    }) => {
+      console.log('User joined', data);
+      setParticipants(prevParticipants => {
+        // uuidで重複排除
+        if (prevParticipants.some(p => p.uuid === data.uuid)) {
+          return prevParticipants;
+        }
+        return [
+          ...prevParticipants,
+          {
+            name: data.username,
+            icon: data.icon,
+            uuid: data.uuid,
+          }
+        ];
+      });
+    });
+
+        // 参加を通知する
+        handleJoin();
+
+        // クリーンアップ
+        return () => {
+            channel.unbind_all();
+            pusher.unsubscribe(`room-${roomId}`);
+        };
+    }, [roomId]);
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -112,49 +143,11 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
           </div>
         </div>
 
-        {/*
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label>カテゴリ</Label>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="genre-switch">マイクイズ</Label>
-              <Switch id="genre-switch" checked={showUserGenres} onCheckedChange={setShowUserGenres} disabled={!isHost} />
-            </div>
-          </div>
-          <Select onValueChange={handleGenreChange} disabled={!isHost}>
-            <SelectTrigger>
-              <SelectValue placeholder="ジャンルを選択" />
-            </SelectTrigger>
-            <SelectContent>
-              {displayedGenres.map((genre) => (
-                <SelectItem key={genre.id} value={genre.id.toString()}>
-                  {genre.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="num-problems">問題数</Label>
-          <Input 
-            id="num-problems" 
-            type="number" 
-            value={numProblems}
-            onChange={handleNumProblemsChange}
-            min={1}
-            max={selectedGenre ? selectedGenre.problems.length : 100}
-            disabled={!isHost || !selectedGenre}
-          />
-          {selectedGenre && <p className="text-sm text-muted-foreground">最大: {selectedGenre.problems.length}</p>}
-        </div>
-        */}
-
         <div className="space-y-4">
           <h3 className="text-lg font-medium">参加者</h3>
           <div className="flex items-center space-x-4">
             {participants.map((user, index) => (
-              <div key={index} className="flex flex-col items-center space-y-1">
+              <div key={user.uuid || index} className="flex flex-col items-center space-y-1">
                 <Avatar>
                   {user.icon && <AvatarImage src={user.icon} alt={user.name} />}
                   <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>

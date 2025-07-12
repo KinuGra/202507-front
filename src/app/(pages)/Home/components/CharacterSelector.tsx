@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -18,6 +18,10 @@ export function CharacterSelector({ onSelectCharacter, onClose }: CharacterSelec
     "/images/avatars/person_avatar_5.png",
     "/images/avatars/person_avatar_6.png",
   ];
+
+  useEffect(() => {
+    localStorage.setItem("icon", selectedIcon ? selectedIcon : "");
+  })
 
   return (
     <div className="p-4 bg-white/90 backdrop-blur-lg rounded-lg shadow-xl border border-gray-200">

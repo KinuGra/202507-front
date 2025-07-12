@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { PushButton } from "./components/PushButton";
 import { useRouter } from "next/navigation";
 import { createRoomId } from "@/app/features/createRoomId";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function HomePage() {
   const router = useRouter();
 
   const handleCreateRoom = async () => {
     const id = await createRoomId();
+    const uuid = uuidv4();
+    localStorage.setItem("uuid", uuid.toString());
 
     await saveRoom({
       roomId: id.toString(),
@@ -44,7 +47,7 @@ export default function HomePage() {
     <>
       <div className="p-4 text-center">
         <h1 className="text-4xl font-bold text-orange-500 mb-8">
-          みんなで
+          僕らの
           <br />
           早押しクイズ
         </h1>

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from "next/navigation";
 import { rootCertificates } from "tls";
-import { createRoomId } from "@/app/(pages)/Home/features/createRoomId";
+import { createRoomId } from "@/app/features/createRoomId";
 
 export default function () {
     const [username, setUsername] = useState<string>("");

@@ -17,12 +17,46 @@ export default function JoinRoomPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleJoinRoomById = () => {
-    const room = mockRooms.find((r) => r.id === roomIdInput);
-    if (room) {
-      router.push(`/Room/WaitingRoom?roomId=${room.id}`);
-    } else {
-      setError("指定されたIDのルームが見つかりませんでした。");
+  const handleJoinRoomById = async () => {
+    setError(null);
+    if (!roomIdInput) {
+      setError("ルームIDを入力してください。");
+      return;
+    }
+    try {
+      // 1. ルーム存在確認
+      const existsRes = await fetch(
+        `/api/game/room-exists?roomId=${roomIdInput}`
+      );
+      const existsData = await existsRes.json();
+      if (!existsData.exists) {
+        setError("指定されたIDのルームが見つかりませんでした。");
+        return;
+      }
+      // 2. ルーム参加API
+      const username = localStorage.getItem("username") || "ゲスト";
+      const uuid = localStorage.getItem("uuid") || "";
+      const icon = localStorage.getItem("characterIcon") || "";
+      const joined_at = new Date().toISOString();
+      const joinRes = await fetch("/api/game/join-room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          roomId: roomIdInput,
+          uuid,
+          icon,
+          joined_at,
+        }),
+      });
+      if (!joinRes.ok) {
+        setError("ルーム参加に失敗しました。");
+        return;
+      }
+      // 3. 待機画面へ遷移
+      router.push(`/Room/WaitingRoom?roomId=${roomIdInput}`);
+    } catch (err) {
+      setError("通信エラーが発生しました。");
     }
   };
 
