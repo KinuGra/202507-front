@@ -58,15 +58,30 @@ export const useQuizWebSocket = (roomId: string, userId: string) => {
 
     const startGame = useCallback(async () => {
         try {
-            await fetch('/api/quiz', {
+            console.log('Starting game for room:', roomId);
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+            
+            // Django APIを直接呼び出し
+            const response = await fetch(`${backendUrl}/api/quiz/start/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'start_game',
-                    roomId,
-                    data: {}
+                    roomId
                 })
             });
+            
+            const result = await response.json();
+            console.log('Start game result:', result);
+            
+            if (result.question) {
+                // 問題を直接設定
+                setGameState(prev => ({
+                    ...prev,
+                    status: 'in_progress',
+                    currentQuestion: result.question,
+                    questionIndex: 0
+                }));
+            }
         } catch (error) {
             console.error('Failed to start game:', error);
         }
@@ -85,21 +100,33 @@ export const useQuizWebSocket = (roomId: string, userId: string) => {
                 })
             });
             
+            console.log('Response status:', response.status);
             const result = await response.json();
+            console.log('Submit answer result:', result);
             
-            await fetch('/api/quiz', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'submit_answer',
-                    roomId,
-                    data: {
-                        userId,
-                        isCorrect: result.isCorrect,
-                        correctAnswer: result.correctAnswer
+            // 正解の場合、次の問題を取得
+            if (result.isCorrect) {
+                setTimeout(async () => {
+                    try {
+                        const nextResponse = await fetch(`${backendUrl}/api/quiz/question/?roomId=${roomId}`);
+                        const nextResult = await nextResponse.json();
+                        console.log('Next question result:', nextResult);
+                        
+                        if (nextResult.question) {
+                            setGameState(prev => ({
+                                ...prev,
+                                currentQuestion: nextResult.question,
+                                questionIndex: nextResult.currentSeq
+                            }));
+                        } else {
+                            // 問題がない場合はゲーム終了
+                            setGameState(prev => ({ ...prev, status: 'finished' }));
+                        }
+                    } catch (error) {
+                        console.error('Failed to get next question:', error);
                     }
-                })
-            });
+                }, 2000);
+            }
             
             return result as QuizApiResponse;
         } catch (error) {
