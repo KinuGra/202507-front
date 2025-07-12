@@ -7,23 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { PushButton } from "@/app/(pages)/Home/components/PushButton";
-
-// --- Type Definitions ---
-interface Participant {
-  name: string;
-  avatarUrl: string;
-  score: number;
-}
-
-interface QuizQuestion {
-  question: string;
-  correctAnswer: string;
-}
-
-interface PlayerScore {
-  name: string;
-  score: number;
-}
+import { useQuizWebSocket } from "@/app/hooks/useQuizWebSocket";
+import { Participant, PlayerScore } from "@/app/types/quiz";
 
 // --- Mock Data ---
 const participants: Participant[] = [
@@ -31,12 +16,6 @@ const participants: Participant[] = [
   { name: "Player 2", avatarUrl: "/images/avatars/person_avatar_2.png", score: 0 },
   { name: "Player 3", avatarUrl: "/images/avatars/person_avatar_3.png", score: 0 },
   { name: "Player 4", avatarUrl: "/images/avatars/person_avatar_4.png", score: 0 },
-];
-
-const quizQuestions: QuizQuestion[] = [
-  { question: "What is the Japanese word for 'apple'?", correctAnswer: "りんご" },
-  { question: "What is the Japanese word for 'cat'?", correctAnswer: "ねこ" },
-  { question: "What is the Japanese word for 'water'?", correctAnswer: "みず" },
 ];
 
 // --- Helper Functions ---
@@ -57,8 +36,12 @@ const generateChoices = (correctChar: string): string[] => {
 
 // --- Component ---
 const QuizScreenPage = () => {
+  // WebSocket connection
+  const roomId = "test-room"; // TODO: Get from URL params
+  const userId = "test-user"; // TODO: Get from auth
+  const { gameState, isConnected, submitAnswer } = useQuizWebSocket(roomId, userId);
+  
   // --- State ---
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [playerScores, setPlayerScores] = useState<PlayerScore[]>(participants.map((p) => ({ name: p.name, score: 0 })));
   const [timeLeft, setTimeLeft] = useState(60);
   const [isTimerActive, setIsTimerActive] = useState(true);
@@ -70,8 +53,16 @@ const QuizScreenPage = () => {
   const [userAnswer, setUserAnswer] = useState("");
   const [choices, setChoices] = useState<string[]>([]);
 
-  const currentQuestion = quizQuestions[currentQuestionIndex];
+  const currentQuestion = gameState.currentQuestion;
   const thisPlayer = playerScores[0];
+  
+  // Update displayed question when WebSocket question changes
+  useEffect(() => {
+    if (currentQuestion?.question) {
+      setDisplayedQuestion("");
+      setIsTypewriterActive(true);
+    }
+  }, [currentQuestion]);
 
   // --- Handlers ---
   const handleRetry = useCallback(() => {
@@ -89,20 +80,14 @@ const QuizScreenPage = () => {
         prevScores.map((p) => (p.name === currentAnswerer.name ? { ...p, score: p.score + 10 } : p))
       );
     }
-    const nextQuestionIndex = currentQuestionIndex + 1;
-    if (nextQuestionIndex < quizQuestions.length) {
-      setCurrentQuestionIndex(nextQuestionIndex);
-      setUserAnswer("");
-      setCurrentAnswerIndex(0);
-      setCurrentAnswerer(null);
-      setGamePhase("question");
-      setIsTimerActive(true);
-      setIsTypewriterActive(true);
-      setTimeLeft(60);
-    } else {
-      setGamePhase("finished");
-    }
-  }, [currentAnswerer, currentQuestionIndex]);
+    setUserAnswer("");
+    setCurrentAnswerIndex(0);
+    setCurrentAnswerer(null);
+    setGamePhase("question");
+    setIsTimerActive(true);
+    setIsTypewriterActive(true);
+    setTimeLeft(60);
+  }, [currentAnswerer]);
 
   // --- Effects ---
   useEffect(() => {
@@ -112,7 +97,7 @@ const QuizScreenPage = () => {
   }, [timeLeft, isTimerActive]);
 
   useEffect(() => {
-    if (!currentQuestion || !isTypewriterActive) return;
+    if (!currentQuestion?.question || !isTypewriterActive) return;
     const fullQuestion = currentQuestion.question;
     const start_index = displayedQuestion.length;
     if (start_index >= fullQuestion.length) return;
@@ -123,12 +108,9 @@ const QuizScreenPage = () => {
       if (index >= fullQuestion.length) clearInterval(interval);
     }, 50);
     return () => clearInterval(interval);
-  }, [currentQuestion, isTypewriterActive, displayedQuestion.length]);
+  }, [currentQuestion?.question, isTypewriterActive, displayedQuestion.length]);
 
-  useEffect(() => {
-    setDisplayedQuestion("");
-    setIsTypewriterActive(true);
-  }, [currentQuestionIndex]);
+  // Remove old effect that depended on currentQuestionIndex
 
   useEffect(() => {
     if (gamePhase === "incorrect") {
@@ -142,25 +124,27 @@ const QuizScreenPage = () => {
   }, [gamePhase, handleRetry, handleNextQuestion]);
 
   const handleStartAnswering = () => {
+    if (!currentQuestion) return;
     setIsTimerActive(false);
     setIsTypewriterActive(false);
     setCurrentAnswerer(thisPlayer);
     setGamePhase("answering");
-    setChoices(generateChoices(currentQuestion.correctAnswer[0]));
+    setChoices(generateChoices(currentQuestion.answer_full[0]));
   };
 
-  const handleChoiceClick = (char: string) => {
-    if (gamePhase !== "answering" || currentAnswerer?.name !== thisPlayer.name) return;
-    if (char === currentQuestion.correctAnswer[currentAnswerIndex]) {
-      const nextUserAnswer = userAnswer + char;
-      setUserAnswer(nextUserAnswer);
-      if (nextUserAnswer === currentQuestion.correctAnswer) {
-        setGamePhase("correct");
-      } else {
-        const nextIndex = currentAnswerIndex + 1;
-        setCurrentAnswerIndex(nextIndex);
-        setChoices(generateChoices(currentQuestion.correctAnswer[nextIndex]));
-      }
+  const handleChoiceClick = async (char: string) => {
+    if (gamePhase !== "answering" || currentAnswerer?.name !== thisPlayer.name || !currentQuestion) return;
+    
+    const nextUserAnswer = userAnswer + char;
+    setUserAnswer(nextUserAnswer);
+    
+    if (nextUserAnswer === currentQuestion.answer_full) {
+      const result = await submitAnswer(nextUserAnswer);
+      setGamePhase(result.isCorrect ? "correct" : "incorrect");
+    } else if (char === currentQuestion.answer_full[currentAnswerIndex]) {
+      const nextIndex = currentAnswerIndex + 1;
+      setCurrentAnswerIndex(nextIndex);
+      setChoices(generateChoices(currentQuestion.answer_full[nextIndex]));
     } else {
       setGamePhase("incorrect");
     }
@@ -202,12 +186,15 @@ const QuizScreenPage = () => {
                 {/* Question Area */}
                 <div className="flex-grow flex flex-col justify-center">
                     <CardHeader className="p-2">
-                        <CardTitle className="text-center text-lg md:text-xl">Question {currentQuestionIndex + 1}</CardTitle>
+                        <CardTitle className="text-center text-lg md:text-xl">Question {gameState.questionIndex + 1}</CardTitle>
                     </CardHeader>
                     <CardContent className="p-2">
                         <p className="text-lg md:text-2xl text-center font-semibold break-words px-2 min-h-[6rem]">
-                            {gamePhase === "finished" ? "Quiz Finished!" : displayedQuestion}
+                            {gameState.status === "finished" ? "Quiz Finished!" : displayedQuestion}
                         </p>
+                        {!isConnected && (
+                            <p className="text-sm text-red-500 text-center">接続中...</p>
+                        )}
                     </CardContent>
                 </div>
 
