@@ -5,7 +5,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ModeToggle } from "./ModeToggle";
 
 interface HeaderProps {
   onIconClick: () => void;
@@ -34,7 +33,6 @@ export function Header({ onIconClick, characterIcon, username }: HeaderProps) {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <ModeToggle />
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
