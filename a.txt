@@ -1,3 +1,0 @@
-src/app/Home,src/app/Roomが動くようにModule not foundのエラーを解消してください
-uiは全てshadcnを用いてください。
-関数は全てexport functionを付けて定義してほしいです
