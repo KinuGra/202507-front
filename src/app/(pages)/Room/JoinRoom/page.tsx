@@ -101,7 +101,8 @@ export default function JoinRoomPage() {
         console.error("insert-rp 通信エラー:", e);
       }
 
-      console.log("UsrsByRoom : ", fetchUsersByRoom(roomIdInput));
+      // 引数に指定したroomId内のユーザー情報を取得
+      await console.log("UsrsByRoom : ", fetchUsersByRoom(roomIdInput));
 
       // 3. 待機画面へ遷移
       router.push(`/Room/WaitingRoom?roomId=${roomIdInput}`);
