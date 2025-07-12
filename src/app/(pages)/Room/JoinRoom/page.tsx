@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Terminal } from "lucide-react";
 import { mockRooms } from "./mock-rooms";
+import { fetchUsersByRoom } from "@/app/features/getUsersByRoom";
 
 export default function JoinRoomPage() {
   const [roomIdInput, setRoomIdInput] = useState("");
@@ -99,6 +100,8 @@ export default function JoinRoomPage() {
       } catch (e) {
         console.error("insert-rp 通信エラー:", e);
       }
+
+      console.log("UsrsByRoom : ", fetchUsersByRoom(roomIdInput));
 
       // 3. 待機画面へ遷移
       router.push(`/Room/WaitingRoom?roomId=${roomIdInput}`);
