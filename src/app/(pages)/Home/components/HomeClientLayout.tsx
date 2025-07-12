@@ -1,5 +1,3 @@
-// HomeClientLayout.tsx (修正後)
-
 "use client";
 
 import * as React from "react";
@@ -33,23 +31,23 @@ export function HomeClientLayout({ children }: HomeClientLayoutProps) {
     }
   }, []);
 
-  function handleCharacterSelect(icon: string, name: string) {
+  const handleCharacterSelect = (icon: string, name: string) => {
     try {
       localStorage.setItem("characterIcon", icon);
       localStorage.setItem("username", name);
-    } catch (error) {}
+    } catch (error) {
+      // localStorageが使用できない環境でのエラーを無視
+    }
     setCharacterIcon(icon);
     setUsername(name);
     setShowCharacterSelector(false);
-  }
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <header className="border-b px-4 py-2 flex items-center gap-2">
-        {/* ▼▼▼▼▼ ここから変更 ▼▼▼▼▼ */}
         {!isMounted ? (
           <>
-            {/* マウント前はサーバーと同じスケルトンを表示 */}
             <Button variant="ghost" size="icon" disabled aria-label="キャラクター選択">
               <Avatar>
                 <AvatarFallback>G</AvatarFallback>
@@ -59,7 +57,6 @@ export function HomeClientLayout({ children }: HomeClientLayoutProps) {
           </>
         ) : (
           <>
-            {/* マウント後にlocalStorageの値を反映したUIを表示 */}
             <Button
               variant="ghost"
               size="icon"
@@ -77,7 +74,6 @@ export function HomeClientLayout({ children }: HomeClientLayoutProps) {
             <span className="font-bold">{username}</span>
           </>
         )}
-        {/* ▲▲▲▲▲ ここまで変更 ▲▲▲▲▲ */}
       </header>
       <main className="flex-1 flex flex-col items-center justify-start">{children}</main>
       <BottomNav />
