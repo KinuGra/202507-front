@@ -45,6 +45,10 @@ export const useQuizWebSocket = (roomId: string, userId: string) => {
             setGameState(prev => ({ ...prev, participants: data.participants }));
         });
 
+        channel.bind('game:end', () => {
+            setGameState(prev => ({ ...prev, status: 'finished' }));
+        });
+
         return () => {
             channel.unbind_all();
             pusherClient.unsubscribe(`private-quiz-${roomId}`);

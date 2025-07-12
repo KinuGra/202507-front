@@ -38,6 +38,13 @@ export async function POST(request: NextRequest) {
                 });
                 break;
 
+            case 'end_game':
+                await pusher.trigger(`private-quiz-${roomId}`, 'game:end', {
+                    message: 'Game ended',
+                    timestamp: new Date().toISOString()
+                });
+                break;
+
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }

@@ -39,7 +39,7 @@ const QuizScreenPage = () => {
   // WebSocket connection
   const roomId = "test-room"; // TODO: Get from URL params
   const userId = "test-user"; // TODO: Get from auth
-  const { gameState, isConnected, submitAnswer } = useQuizWebSocket(roomId, userId);
+  const { gameState, isConnected, startGame, submitAnswer } = useQuizWebSocket(roomId, userId);
   
   // --- State ---
   const [playerScores, setPlayerScores] = useState<PlayerScore[]>(participants.map((p) => ({ name: p.name, score: 0 })));
@@ -230,7 +230,14 @@ const QuizScreenPage = () => {
                     </div>
                 </div>
             </Card>
-            {gamePhase === "question" && !currentAnswerer && (
+            {gameState.status === 'waiting' && (
+                <div className="absolute bottom-0 mb-2 md:mb-4">
+                    <Button onClick={startGame} className="bg-blue-600 hover:bg-blue-700">
+                        ゲーム開始
+                    </Button>
+                </div>
+            )}
+            {gamePhase === "question" && !currentAnswerer && gameState.status === 'in_progress' && (
                 <div className="absolute bottom-0 mb-2 md:mb-4 transform scale-75 md:scale-90">
                     <PushButton onClick={handleStartAnswering} />
                 </div>
