@@ -9,6 +9,7 @@ interface CharacterSelectorProps {
 
 export function CharacterSelector({ onSelectCharacter, onClose }: CharacterSelectorProps) {
   const [username, setUsername] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const availableCharacters = [
     "/images/avatars/person_avatar_1.png",
     "/images/avatars/person_avatar_2.png",
@@ -40,17 +41,24 @@ export function CharacterSelector({ onSelectCharacter, onClose }: CharacterSelec
             variant="ghost"
             size="icon"
             onClick={() => {
-              onSelectCharacter(icon, username || "ゲスト");
-              onClose();
+              setSelectedIcon(icon);
             }}
-            className="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 border-2 border-gray-300 hover:border-orange-500 bg-gray-100 shadow-lg hover:shadow-orange-500/20"
+            className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 border-2 ${
+              selectedIcon === icon ? "border-orange-500" : "border-gray-300"
+            } hover:border-orange-500 bg-gray-100 shadow-lg hover:shadow-orange-500/20`}
           >
             <img src={icon} alt={`Character ${index + 1}`} className="w-16 h-16 object-contain rounded-full" />
           </Button>
         ))}
       </div>
-      <Button onClick={onClose} className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white">
-        Close
+      <Button
+        onClick={() => {
+          onSelectCharacter(selectedIcon || availableCharacters[0], username || "ゲスト");
+          onClose();
+        }}
+        className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white"
+      >
+        決定
       </Button>
     </div>
   );
