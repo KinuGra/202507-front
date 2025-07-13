@@ -15,6 +15,28 @@ export const useQuizWebSocket = (roomId: string, userId: string) => {
     useEffect(() => {
         if (!roomId) return;
 
+        // 参加者情報を取得
+        const fetchParticipants = async () => {
+            try {
+                console.log('Fetching participants for room:', roomId);
+                const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+                const response = await fetch(`${backendUrl}/api/quiz/participants/?roomId=${roomId}`);
+                console.log('Participants response status:', response.status);
+                const result = await response.json();
+                console.log('Participants result:', result);
+                if (result.participants) {
+                    console.log('Setting participants:', result.participants);
+                    setGameState(prev => ({ ...prev, participants: result.participants }));
+                } else {
+                    console.log('No participants found in response');
+                }
+            } catch (error) {
+                console.error('Failed to fetch participants:', error);
+            }
+        };
+        
+        fetchParticipants();
+
         const channel = pusherClient.subscribe(`private-quiz-${roomId}`);
         
         channel.bind('pusher:subscription_succeeded', () => {
@@ -44,7 +66,10 @@ export const useQuizWebSocket = (roomId: string, userId: string) => {
                 scores: {
                     ...prev.scores,
                     [data.userId]: data.score
-                }
+                },
+                participants: prev.participants.map(p => 
+                    p.uuid === data.userId ? { ...p, score: data.score } : p
+                )
             }));
         });
 

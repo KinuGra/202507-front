@@ -11,12 +11,7 @@ import { useQuizWebSocket } from "@/app/hooks/useQuizWebSocket";
 import { useRouter } from "next/navigation";
 import { DatabaseViewer } from "@/components/debug/DatabaseViewer";
 
-const participants = [
-  { name: "Player 1", avatarUrl: "/images/avatars/person_avatar_1.png", score: 0 },
-  { name: "Player 2", avatarUrl: "/images/avatars/person_avatar_2.png", score: 0 },
-  { name: "Player 3", avatarUrl: "/images/avatars/person_avatar_3.png", score: 0 },
-  { name: "Player 4", avatarUrl: "/images/avatars/person_avatar_4.png", score: 0 },
-];
+
 
 const HIRAGANA = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん".split("");
 
@@ -51,7 +46,7 @@ const QuizScreenPage = () => {
   const router = useRouter();
   
   const currentQuestion = gameState.currentQuestion;
-  const thisPlayer = participants[0];
+  const thisPlayer = gameState.participants.find(p => p.uuid === userId) || { name: 'Player', avatarUrl: '', score: 0, uuid: userId };
   
   useEffect(() => {
     // URLパラメータまたはlocalStorageからroomIdとuserIdを取得
@@ -184,14 +179,14 @@ const QuizScreenPage = () => {
       </header>
 
       <div className="flex-shrink-0 flex justify-center space-x-2 md:space-x-4 my-1 md:my-2">
-        {participants.map((p, index) => (
+        {gameState.participants.map((p, index) => (
           <div key={index} className="flex flex-col items-center">
             <Avatar className="w-10 h-10 md:w-14 md:h-14">
               <AvatarImage src={p.avatarUrl} alt={p.name} />
               <AvatarFallback>{p.name.substring(0, 2)}</AvatarFallback>
             </Avatar>
             <span className="text-xs mt-1">{p.name}</span>
-            <span className="text-xs font-bold">{gameState.scores[p.name] || 0}</span>
+            <span className="text-xs font-bold">{p.score}</span>
           </div>
         ))}
       </div>
