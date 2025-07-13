@@ -7,11 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { PushButton } from "@/app/(pages)/Home/components/PushButton";
-import { useQuizWebSocket } from "@/app/hooks/useQuizWebSocket";
 import { useRouter } from "next/navigation";
-import { DatabaseViewer } from "@/components/debug/DatabaseViewer";
-
-
 
 const HIRAGANA = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん".split("");
 
@@ -29,9 +25,6 @@ const generateChoices = (correctChar: string): string[] => {
 };
 
 const QuizScreenPage = () => {
-  const [roomId, setRoomId] = useState<string>("");
-  const [userId, setUserId] = useState<string>("");
-  const [isInitialized, setIsInitialized] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isTimerActive, setIsTimerActive] = useState(true);
   const [displayedQuestion, setDisplayedQuestion] = useState("");
@@ -42,46 +35,55 @@ const QuizScreenPage = () => {
   const [userAnswer, setUserAnswer] = useState("");
   const [choices, setChoices] = useState<string[]>([]);
   
-  const { gameState, isConnected, startGame, submitAnswer } = useQuizWebSocket(roomId, userId);
+  const [questions] = useState([
+    {
+      questionId: 0,
+      question: '夏の大三角とは、こと座のベガ、わし座のアルタイル、はくちょう座の何？',
+      answer_full: 'デネブ'
+    },
+    {
+      questionId: 1,
+      question: '「夏草や 兵どもが 夢の中」という句を読んだ俳人は誰？',
+      answer_full: '松尾芭蕉'
+    },
+    {
+      questionId: 2,
+      question: '毎年7月に行われ、京の三大祭の一つとしても知られる祭は何？',
+      answer_full: '祇園祭'
+    },
+    {
+      questionId: 3,
+      question: '13年周期や17年周期など周期的に大量発生するセミのことを、その周期の特徴から何と呼ぶ？',
+      answer_full: '素数ゼミ'
+    },
+    {
+      questionId: 4,
+      question: 'テングサという海藻を煮て作られ、漢字では「心太」と書かれるゼリー状の食品は何？',
+      answer_full: 'ところてん'
+    }
+  ]);
+  
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const currentQuestion = questions[currentQuestionIndex];
+  
+  const [participants] = useState([
+    { name: "田中太郎", avatarUrl: "/images/avatars/person_avatar_1.png", score: 100, uuid: "1" },
+    { name: "佐藤花子", avatarUrl: "/images/avatars/person_avatar_2.png", score: 80, uuid: "2" }
+  ]);
+  
   const router = useRouter();
-  
-  const currentQuestion = gameState.currentQuestion;
-  const thisPlayer = gameState.participants.find(p => p.uuid === userId) || { name: 'Player', avatarUrl: '', score: 0, uuid: userId };
-  
-  useEffect(() => {
-    // URLパラメータまたはlocalStorageからroomIdとuserIdを取得
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomIdFromUrl = urlParams.get('roomId');
-    // const roomIdFromStorage = localStorage.getItem('currentRoomId');
-    const userIdFromStorage = localStorage.getItem('uuid');
-    
-    const finalRoomId = roomIdFromUrl || 'test-room';
-    const finalUserId = userIdFromStorage || 'test-user-uuid';
-    
-    setRoomId(finalRoomId);
-    setUserId(finalUserId);
-    setIsInitialized(true);
-    
-    console.log('Quiz initialized:', { roomId: finalRoomId, userId: finalUserId });
-  }, []);
 
   useEffect(() => {
-    if (currentQuestion?.question) {
-      setDisplayedQuestion("");
-      setIsTypewriterActive(true);
-      setGamePhase("question");
-      setUserAnswer("");
-      setCurrentAnswerIndex(0);
-      setCurrentAnswerer(null);
-    }
-  }, [currentQuestion]);
+    setDisplayedQuestion("");
+    setIsTypewriterActive(true);
+  }, [currentQuestionIndex]);
 
   useEffect(() => {
     if (!currentQuestion?.question || !isTypewriterActive) return;
     const fullQuestion = currentQuestion.question;
     
     let index = 0;
-    setDisplayedQuestion(""); // 初期化
+    setDisplayedQuestion("");
     
     const interval = setInterval(() => {
       if (index < fullQuestion.length) {
@@ -94,7 +96,7 @@ const QuizScreenPage = () => {
     }, 50);
     
     return () => clearInterval(interval);
-  }, [currentQuestion?.question]);
+  }, [currentQuestion?.question, isTypewriterActive]);
 
   useEffect(() => {
     if (!isTimerActive || timeLeft === 0) return;
@@ -105,64 +107,36 @@ const QuizScreenPage = () => {
   useEffect(() => {
     if (gamePhase === "correct" || gamePhase === "incorrect") {
       const timer = setTimeout(() => {
+        if (gamePhase === "correct" && currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex(prev => prev + 1);
+          setTimeLeft(60);
+        }
         setGamePhase("question");
         setUserAnswer("");
         setCurrentAnswerIndex(0);
         setCurrentAnswerer(null);
-        setTimeLeft(60);
         setIsTimerActive(true);
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [gamePhase]);
-
-  useEffect(() => {
-    if (gameState.status === "finished") {
-      const timer = setTimeout(() => router.push("/resultScreen"), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [gameState.status, router]);
-  
-  // 初期化が完了していない場合はローディング表示
-  if (!isInitialized) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="text-lg">Loading...</div>
-          <div className="text-sm text-gray-500 mt-2">Initializing quiz...</div>
-        </div>
-      </div>
-    );
-  }
+  }, [gamePhase, currentQuestionIndex, questions.length]);
 
   const handleStartAnswering = () => {
-    if (!currentQuestion) return;
     setIsTimerActive(false);
     setIsTypewriterActive(false);
-    setCurrentAnswerer(thisPlayer.name);
+    setCurrentAnswerer("田中太郎");
     setGamePhase("answering");
     setChoices(generateChoices(currentQuestion.answer_full[0]));
   };
 
-  const handleChoiceClick = async (char: string) => {
-    if (gamePhase !== "answering" || currentAnswerer !== thisPlayer.name || !currentQuestion) return;
+  const handleChoiceClick = (char: string) => {
+    if (gamePhase !== "answering" || currentAnswerer !== "田中太郎") return;
     
     const nextUserAnswer = userAnswer + char;
     setUserAnswer(nextUserAnswer);
     
-    console.log('Choice clicked:', {
-      char,
-      nextUserAnswer,
-      correctAnswer: currentQuestion.answer_full,
-      currentAnswerIndex,
-      isComplete: nextUserAnswer === currentQuestion.answer_full
-    });
-    
     if (nextUserAnswer === currentQuestion.answer_full) {
-      console.log('Submitting complete answer:', nextUserAnswer);
-      const result = await submitAnswer(nextUserAnswer);
-      console.log('Submit result:', result);
-      setGamePhase(result.isCorrect ? "correct" : "incorrect");
+      setGamePhase("correct");
     } else if (char === currentQuestion.answer_full[currentAnswerIndex]) {
       const nextIndex = currentAnswerIndex + 1;
       setCurrentAnswerIndex(nextIndex);
@@ -170,7 +144,6 @@ const QuizScreenPage = () => {
         setChoices(generateChoices(currentQuestion.answer_full[nextIndex]));
       }
     } else {
-      console.log('Wrong character selected');
       setGamePhase("incorrect");
     }
   };
@@ -184,7 +157,7 @@ const QuizScreenPage = () => {
       </header>
 
       <div className="flex-shrink-0 flex justify-center space-x-2 md:space-x-4 my-1 md:my-2">
-        {gameState.participants.map((p, index) => (
+        {participants.map((p, index) => (
           <div key={index} className="flex flex-col items-center">
             <Avatar className="w-10 h-10 md:w-14 md:h-14">
               <AvatarImage src={p.avatarUrl} alt={p.name} />
@@ -207,19 +180,13 @@ const QuizScreenPage = () => {
             <div className="flex-grow flex flex-col justify-center">
               <CardHeader className="p-2">
                 <CardTitle className="text-center text-lg md:text-xl">
-                  Question {gameState.questionIndex + 1}
+                  Question {currentQuestionIndex + 1}
                 </CardTitle>
-                <div className="text-xs text-center text-gray-500">
-                  Room: {roomId} | User: {userId.substring(0, 8)}... | Status: {gameState.status} | Connected: {isConnected ? 'Yes' : 'No'}
-                </div>
               </CardHeader>
               <CardContent className="p-2">
                 <p className="text-lg md:text-2xl text-center font-semibold break-words px-2 min-h-[6rem]">
-                  {gameState.status === "finished" ? "Quiz Finished!" : displayedQuestion}
+                  {displayedQuestion}
                 </p>
-                {!isConnected && (
-                  <p className="text-sm text-red-500 text-center">接続中...</p>
-                )}
               </CardContent>
             </div>
 
@@ -244,7 +211,7 @@ const QuizScreenPage = () => {
                       <Button 
                         key={char} 
                         onClick={() => handleChoiceClick(char)} 
-                        disabled={currentAnswerer !== thisPlayer.name} 
+                        disabled={currentAnswerer !== "田中太郎"} 
                         className="text-xl md:text-2xl h-12 md:h-16"
                       >
                         {char}
@@ -261,32 +228,17 @@ const QuizScreenPage = () => {
                     </AlertTitle>
                   </Alert>
                 )}
-                {gameState.status === "finished" && (
-                  <Alert className="bg-blue-100 border-blue-400">
-                    <AlertTitle className="font-bold">Quiz Complete!</AlertTitle>
-                  </Alert>
-                )}
               </div>
             </div>
           </Card>
           
-          {gameState.status === 'waiting' && (
-            <div className="absolute bottom-0 mb-2 md:mb-4">
-              <Button onClick={startGame} className="bg-blue-600 hover:bg-blue-700">
-                ゲーム開始
-              </Button>
-            </div>
-          )}
-          
-          {gamePhase === "question" && !currentAnswerer && gameState.status === 'in_progress' && (
+          {gamePhase === "question" && !currentAnswerer && (
             <div className="absolute bottom-0 mb-2 md:mb-4 transform scale-75 md:scale-90">
               <PushButton onClick={handleStartAnswering} />
             </div>
           )}
         </div>
       </main>
-      
-      <DatabaseViewer />
     </div>
   );
 };
