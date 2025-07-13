@@ -79,17 +79,22 @@ const QuizScreenPage = () => {
   useEffect(() => {
     if (!currentQuestion?.question || !isTypewriterActive) return;
     const fullQuestion = currentQuestion.question;
-    const startIndex = displayedQuestion.length;
-    if (startIndex >= fullQuestion.length) return;
     
-    let index = startIndex;
+    let index = 0;
+    setDisplayedQuestion(""); // 初期化
+    
     const interval = setInterval(() => {
-      setDisplayedQuestion((prev) => prev + fullQuestion.charAt(index));
-      index++;
-      if (index >= fullQuestion.length) clearInterval(interval);
+      if (index < fullQuestion.length) {
+        setDisplayedQuestion(fullQuestion.substring(0, index + 1));
+        index++;
+      } else {
+        clearInterval(interval);
+        setIsTypewriterActive(false);
+      }
     }, 50);
+    
     return () => clearInterval(interval);
-  }, [currentQuestion?.question, isTypewriterActive, displayedQuestion.length]);
+  }, [currentQuestion?.question]);
 
   useEffect(() => {
     if (!isTimerActive || timeLeft === 0) return;
