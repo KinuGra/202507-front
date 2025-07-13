@@ -52,9 +52,9 @@ export function RoomDetails({ isHost, initialRoomId, users = {} }: RoomDetailsPr
         icon: savedIcon,
         uuid: savedUuid || "",
       };
-      setParticipants(prevParticipants => {
+      setParticipants((prevParticipants) => {
         // uuidで重複排除
-        if (prevParticipants.some(p => p.uuid === currentUser.uuid)) {
+        if (prevParticipants.some((p) => p.uuid === currentUser.uuid)) {
           return prevParticipants;
         }
         return [...prevParticipants, currentUser];
@@ -64,68 +64,71 @@ export function RoomDetails({ isHost, initialRoomId, users = {} }: RoomDetailsPr
     }
   }, [isHost, queryRoomId, hasGenerated]);
 
-    const handleJoin = async () => {
-        try {
-            await fetch("/api/game/join-room", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  username: localStorage.getItem("username"),
-                  roomId,
-                  uuid: localStorage.getItem("uuid"),
-                  icon: localStorage.getItem("icon"),
-                  joined_at: new Date().toISOString(),
-                }),
-            });
-        } catch (e) {
-            console.log(e);
-        }
-    }
-
-    useEffect(() => {
-        if (!roomId) return;
-
-        // Pusherクライアントの初期化
-        const pusher = pusherClient;
-        // チャンネル購読
-        const channel = pusher.subscribe(`room-${roomId}`);
-
-        // イベント受信
-        channel.bind('user-joined', (data: {
-      username: string,
-      roomId: string,
-      uuid: string,
-      icon: string,
-      joined_at: string
-    }) => {
-      console.log('User joined', data);
-      setParticipants(prevParticipants => {
-        // uuidで重複排除
-        if (prevParticipants.some(p => p.uuid === data.uuid)) {
-          return prevParticipants;
-        }
-        return [
-          ...prevParticipants,
-          {
-            name: data.username,
-            icon: data.icon,
-            uuid: data.uuid,
-          }
-        ];
+  const handleJoin = async () => {
+    try {
+      await fetch("/api/game/join-room", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: localStorage.getItem("username"),
+          roomId,
+          uuid: localStorage.getItem("uuid"),
+          icon: localStorage.getItem("icon"),
+          joined_at: new Date().toISOString(),
+        }),
       });
-    });
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
-        // 参加を通知する
-        handleJoin();
+  useEffect(() => {
+    if (!roomId) return;
 
-        // クリーンアップ
-        return () => {
-            channel.unbind_all();
-            pusher.unsubscribe(`room-${roomId}`);
-        };
-    }, [roomId]);
+    // Pusherクライアントの初期化
+    const pusher = pusherClient;
+    // チャンネル購読
+    const channel = pusher.subscribe(`room-${roomId}`);
+
+    // イベント受信
+    channel.bind(
+      "user-joined",
+      (data: {
+        username: string;
+        roomId: string;
+        uuid: string;
+        icon: string;
+        joined_at: string;
+      }) => {
+        console.log("User joined", data);
+        setParticipants((prevParticipants) => {
+          // uuidで重複排除
+          if (prevParticipants.some((p) => p.uuid === data.uuid)) {
+            return prevParticipants;
+          }
+          return [
+            ...prevParticipants,
+            {
+              name: data.username,
+              icon: data.icon,
+              uuid: data.uuid,
+            },
+          ];
+        });
+      }
+    );
+
+    // 参加を通知する
+    handleJoin();
+
+    // クリーンアップ
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(`room-${roomId}`);
+    };
+  }, [roomId]);
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -150,7 +153,7 @@ export function RoomDetails({ isHost, initialRoomId, users = {} }: RoomDetailsPr
               <div key={user.uuid || index} className="flex flex-col items-center space-y-1">
                 <Avatar>
                   {user.icon && <AvatarImage src={user.icon} alt={user.name} />}
-                  <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
+                  <AvatarFallback>{user.name?.charAt(0) || "G"}</AvatarFallback>
                 </Avatar>
                 <span>{user.name}</span>
               </div>
@@ -162,7 +165,11 @@ export function RoomDetails({ isHost, initialRoomId, users = {} }: RoomDetailsPr
         <Link href={isHost ? "/Home" : "/Room/JoinRoom"}>
           <Button variant="outline">キャンセル</Button>
         </Link>
-        {isHost && <Button>スタート</Button>}
+        {isHost && (
+          <Link href={`/quizScreen?roomid=${roomId}`}>
+            <Button>スタート</Button>
+          </Link>
+        )}
       </CardFooter>
     </Card>
   );
