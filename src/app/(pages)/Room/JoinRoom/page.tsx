@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { RoomDetails } from "../components/RoomDetails";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +10,21 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Terminal } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PushButton } from "@/app/(pages)/Home/components/PushButton";
+import Link from "next/link";
 
 export default function JoinRoomPage() {
   const [roomIdInput, setRoomIdInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    const roomIdFromUrl = searchParams.get('roomId');
+    if (roomIdFromUrl) {
+      setJoinedRoomId(roomIdFromUrl);
+    }
+  }, [searchParams]);
 
   const handleJoinRoomById = async () => {
     setError(null);
@@ -57,12 +67,22 @@ export default function JoinRoomPage() {
         return;
       }
 
-      // 3. 待機画面へ遷移
-      router.push(`/Room/WaitingRoom?roomId=${roomIdInput}`);
+      // 3. 参加成功、RoomDetailsを表示
+      setJoinedRoomId(roomIdInput);
+      setRoomIdInput(""); // 入力フィールドをクリア
     } catch (err) {
       setError("通信エラーが発生しました。");
     }
   };
+
+  // 参加済みの場合はRoomDetailsを表示
+  if (joinedRoomId) {
+    return (
+      <div className="container mx-auto p-4">
+        <RoomDetails isHost={false} initialRoomId={joinedRoomId} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -101,9 +121,9 @@ export default function JoinRoomPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <PushButton onClick={handleJoinRoomById}>
+            <Button onClick={handleJoinRoomById} className="w-full">
               ルームに参加する
-            </PushButton>
+            </Button>
           </CardContent>
         </Card>
       </main>

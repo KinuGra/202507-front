@@ -41,7 +41,7 @@ export default function HomePage() {
           uuid: uuid,
           username: localStorage.getItem("username"),
           icon: localStorage.getItem("icon"),
-          loginId: uuid,
+          loginId: null,
           password: "default",
         }),
       });

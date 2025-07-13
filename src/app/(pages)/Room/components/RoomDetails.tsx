@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -45,6 +45,7 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
   const queryRoomId = searchParams.get("roomId");
   const [roomId, setRoomId] = useState(queryRoomId || initialRoomId || "");
   const [participants, setParticipants] = useState<User[]>([]);
+  const router = useRouter();
 
   // ルームID変化に対応
   useEffect(() => {
@@ -87,7 +88,6 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
         name: rawUsername.trim() || "ゲスト",
         icon: localStorage.getItem("characterIcon"),
       };
-
       setParticipants((prev) =>
         prev.some((p) => p.uuid === currentUser.uuid) ? prev : [...prev, currentUser]
       );
@@ -119,25 +119,38 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
       );
     });
 
-    // 自分の参加を通知
-    const notifyJoin = async () => {
-      try {
-        await fetch("/api/game/join-room", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: localStorage.getItem("username"),
-            roomId,
-            uuid: localStorage.getItem("uuid"),
-            icon: localStorage.getItem("characterIcon"),
-            joined_at: new Date().toISOString(),
-          }),
-        });
-      } catch (e) {
-        console.error("join-room失敗:", e);
-      }
-    };
-    notifyJoin();
+    // ゲーム開始イベントを受信（参加者用）
+    if (!isHost) {
+      channel.bind("game-started", (data: { roomId: string }) => {
+        console.log('Game started, redirecting to quiz screen');
+        router.push(`/quizScreen?roomId=${roomId}`);
+      });
+    }
+
+    // 自分の参加を通知（初回のみ）
+    const currentUuid = localStorage.getItem("uuid");
+    const isAlreadyJoined = participants.some(p => p.uuid === currentUuid);
+    
+    if (!isAlreadyJoined) {
+      const notifyJoin = async () => {
+        try {
+          await fetch("/api/game/join-room", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: localStorage.getItem("username"),
+              roomId,
+              uuid: currentUuid,
+              icon: localStorage.getItem("characterIcon"),
+              joined_at: new Date().toISOString(),
+            }),
+          });
+        } catch (e) {
+          console.error("join-room失敗:", e);
+        }
+      };
+      notifyJoin();
+    }
 
     return () => {
       channel.unbind_all();
@@ -195,7 +208,24 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
         <Link href={isHost ? "/Home" : "/Room/JoinRoom"}>
           <Button variant="outline">キャンセル</Button>
         </Link>
-        {isHost && <Button>スタート</Button>}
+        {isHost && (
+          <Button onClick={async () => {
+            // ゲーム開始イベントを送信
+            try {
+              await fetch('/api/game/start-game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId })
+              });
+            } catch (error) {
+              console.error('Failed to start game:', error);
+            }
+            // ホストもクイズ画面に遷移
+            router.push(`/quizScreen?roomId=${roomId}`);
+          }}>
+            スタート
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

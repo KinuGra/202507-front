@@ -22,7 +22,21 @@ export async function POST(req: Request) {
         joined_at
     }: joinInfo = await req.json();
 
-    // TODO Djangoに対する処理（room_participants)
+    // Djangoにルーム参加を通知
+    const djangoUrl = process.env.DJANGO_API_URL;
+    try {
+        await fetch(`${djangoUrl}/api/quiz/join/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                roomId, 
+                userUuid: uuid,
+                username: username || 'Guest User'
+            })
+        });
+    } catch (error) {
+        console.error('Failed to join room in Django:', error);
+    }
     
 
     // Pusherでイベント発火（クライアントが受信する）
