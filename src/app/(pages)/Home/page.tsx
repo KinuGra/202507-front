@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type React from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { PushButton } from "./components/PushButton";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,9 @@ import { v4 as uuidv4 } from "uuid";
 
 export default function HomePage() {
   const router = useRouter();
+
+  //　ボタンを押した回数
+  const [count, setCount] = React.useState(0);
 
   const handleCreateRoom = async () => {
     // ルームIDとUUIDの生成
@@ -114,7 +117,7 @@ export default function HomePage() {
         <br />
         早押しクイズ
       </h1>
-      <PushButton />
+      <PushButton onClick={() => setCount(count + 1)}/>
       <div className="mt-8 w-full max-w-md flex justify-center space-x-4">
         <Button
           className="w-1/2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg"
@@ -127,6 +130,9 @@ export default function HomePage() {
             ルーム参加
           </Button>
         </Link>
+      </div>
+      <div className="mt-4 text-gray-700 font-bold">
+        ボタンを押した回数: {count}
       </div>
     </div>
   );
