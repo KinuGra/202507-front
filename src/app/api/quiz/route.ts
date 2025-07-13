@@ -48,6 +48,15 @@ export async function POST(request: NextRequest) {
                 });
                 break;
 
+            case 'buzz_result':
+                await pusher.trigger(`private-quiz-${roomId}`, 'buzz:result', {
+                    userId: data.userId,
+                    buzzOrder: data.buzzOrder,
+                    hasAnswerRight: data.hasAnswerRight,
+                    timestamp: new Date().toISOString()
+                });
+                break;
+
             case 'end_game':
                 await pusher.trigger(`private-quiz-${roomId}`, 'game:end', {
                     message: 'Game ended',
