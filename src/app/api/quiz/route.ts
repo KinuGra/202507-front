@@ -31,6 +31,16 @@ export async function POST(request: NextRequest) {
                 });
                 break;
 
+            case 'update_score':
+                console.log('Triggering score update:', { roomId, userId: data.userId, score: data.score });
+                await pusher.trigger(`private-quiz-${roomId}`, 'score:update', {
+                    userId: data.userId,
+                    score: data.score,
+                    timestamp: new Date().toISOString()
+                });
+                console.log('Score update triggered successfully');
+                break;
+
             case 'update_scores':
                 await pusher.trigger(`private-quiz-${roomId}`, 'scores:update', {
                     scores: data.scores,

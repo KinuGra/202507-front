@@ -37,6 +37,17 @@ export const useQuizWebSocket = (roomId: string, userId: string) => {
             console.log('Answer result:', data);
         });
 
+        channel.bind('score:update', (data: { userId: string; score: number }) => {
+            console.log('Received score update:', data);
+            setGameState(prev => ({
+                ...prev,
+                scores: {
+                    ...prev.scores,
+                    [data.userId]: data.score
+                }
+            }));
+        });
+
         channel.bind('scores:update', (data: { scores: Record<string, number> }) => {
             setGameState(prev => ({ ...prev, scores: data.scores }));
         });

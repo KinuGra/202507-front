@@ -57,10 +57,10 @@ const QuizScreenPage = () => {
     // URLパラメータまたはlocalStorageからroomIdとuserIdを取得
     const urlParams = new URLSearchParams(window.location.search);
     const roomIdFromUrl = urlParams.get('roomId');
-    const roomIdFromStorage = localStorage.getItem('currentRoomId');
+    // const roomIdFromStorage = localStorage.getItem('currentRoomId');
     const userIdFromStorage = localStorage.getItem('uuid');
     
-    const finalRoomId = roomIdFromUrl || roomIdFromStorage || 'test-room';
+    const finalRoomId = roomIdFromUrl || 'test-room';
     const finalUserId = userIdFromStorage || 'test-user-uuid';
     
     setRoomId(finalRoomId);
