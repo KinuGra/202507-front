@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Terminal } from "lucide-react";
 import { mockRooms } from "./mock-rooms";
+import { fetchUsersByRoom } from "@/app/features/getUsersByRoom";
 
 export default function JoinRoomPage() {
   const [roomIdInput, setRoomIdInput] = useState("");
@@ -53,6 +54,56 @@ export default function JoinRoomPage() {
         setError("ルーム参加に失敗しました。");
         return;
       }
+
+      // ユーザー作成
+      try {
+        const res = await fetch("/api/game/create-user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            uuid: uuid,
+            username: localStorage.getItem("username"),
+            icon: localStorage.getItem("icon"),
+            loginId: uuid,
+            password: "default",
+          }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          console.error("create-user 失敗:", error);
+        }
+      } catch (e) {
+        console.error("create-user 通信エラー:", e);
+      }
+
+      // 参加者登録
+      try {
+        const res = await fetch("/api/game/insert-rp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            roomId: roomIdInput,
+            uuid: uuid,
+            currentScore: 0,
+          }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          console.error("insert-rp 失敗:", error);
+        }
+      } catch (e) {
+        console.error("insert-rp 通信エラー:", e);
+      }
+
+      // 引数に指定したroomId内のユーザー情報を取得
+      await console.log("UsrsByRoom : ", fetchUsersByRoom(roomIdInput));
+
       // 3. 待機画面へ遷移
       router.push(`/Room/WaitingRoom?roomId=${roomIdInput}`);
     } catch (err) {

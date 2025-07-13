@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Home, Users, Edit, FileText, Crown } from "lucide-react";
+import { Home /*, Users, Edit, FileText, Crown */ } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -10,10 +10,10 @@ export function BottomNav() {
 
   const navItems = [
     { href: "/Home", icon: Home, label: "ホーム" },
-    { href: "/Home/Friend", icon: Users, label: "フレンド" },
-    { href: "/Home/CreateProblem", icon: Edit, label: "問題作成" },
-    { href: "/Home/BattleRecord", icon: FileText, label: "戦績" },
-    { href: "/Home/Ranking", icon: Crown, label: "ランキング" },
+    // { href: "/Home/Friend", icon: Users, label: "フレンド" },
+    // { href: "/Home/CreateProblem", icon: Edit, label: "問題作成" },
+    // { href: "/Home/BattleRecord", icon: FileText, label: "戦績" },
+    // { href: "/Home/Ranking", icon: Crown, label: "ランキング" },
   ];
 
   return (
@@ -23,7 +23,11 @@ export function BottomNav() {
           const isActive = pathname === item.href;
           const Icon = item.icon;
           return (
-            <Link key={item.href} href={item.href} className={`flex flex-col items-center p-2 ${isActive ? 'text-sky-400' : ''}`}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center p-2 ${isActive ? 'text-sky-400' : ''}`}
+            >
               <Icon />
               <span className="text-xs mt-1">{item.label}</span>
             </Link>
