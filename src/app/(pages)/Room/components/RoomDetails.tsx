@@ -150,7 +150,7 @@ export function RoomDetails({ isHost, initialRoomId, users = {} }: RoomDetailsPr
               <div key={user.uuid || index} className="flex flex-col items-center space-y-1">
                 <Avatar>
                   {user.icon && <AvatarImage src={user.icon} alt={user.name} />}
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
                 </Avatar>
                 <span>{user.name}</span>
               </div>

@@ -9,6 +9,7 @@ import { Alert, AlertTitle } from "@/components/ui/alert";
 import { PushButton } from "@/app/(pages)/Home/components/PushButton";
 import { useQuizWebSocket } from "@/app/hooks/useQuizWebSocket";
 import { useRouter } from "next/navigation";
+import { DatabaseViewer } from "@/components/debug/DatabaseViewer";
 
 const participants = [
   { name: "Player 1", avatarUrl: "/images/avatars/person_avatar_1.png", score: 0 },
@@ -33,11 +34,9 @@ const generateChoices = (correctChar: string): string[] => {
 };
 
 const QuizScreenPage = () => {
-  const roomId = "test-room";
-  const userId = "test-user";
-  const { gameState, isConnected, startGame, submitAnswer } = useQuizWebSocket(roomId, userId);
-  const router = useRouter();
-  
+  const [roomId, setRoomId] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+  const [isInitialized, setIsInitialized] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isTimerActive, setIsTimerActive] = useState(true);
   const [displayedQuestion, setDisplayedQuestion] = useState("");
@@ -47,9 +46,29 @@ const QuizScreenPage = () => {
   const [currentAnswerIndex, setCurrentAnswerIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [choices, setChoices] = useState<string[]>([]);
-
+  
+  const { gameState, isConnected, startGame, submitAnswer } = useQuizWebSocket(roomId, userId);
+  const router = useRouter();
+  
   const currentQuestion = gameState.currentQuestion;
   const thisPlayer = participants[0];
+  
+  useEffect(() => {
+    // URLパラメータまたはlocalStorageからroomIdとuserIdを取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomIdFromUrl = urlParams.get('roomId');
+    const roomIdFromStorage = localStorage.getItem('currentRoomId');
+    const userIdFromStorage = localStorage.getItem('uuid');
+    
+    const finalRoomId = roomIdFromUrl || roomIdFromStorage || 'test-room';
+    const finalUserId = userIdFromStorage || 'test-user-uuid';
+    
+    setRoomId(finalRoomId);
+    setUserId(finalUserId);
+    setIsInitialized(true);
+    
+    console.log('Quiz initialized:', { roomId: finalRoomId, userId: finalUserId });
+  }, []);
 
   useEffect(() => {
     if (currentQuestion?.question) {
@@ -103,6 +122,18 @@ const QuizScreenPage = () => {
       return () => clearTimeout(timer);
     }
   }, [gameState.status, router]);
+  
+  // 初期化が完了していない場合はローディング表示
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="text-lg">Loading...</div>
+          <div className="text-sm text-gray-500 mt-2">Initializing quiz...</div>
+        </div>
+      </div>
+    );
+  }
 
   const handleStartAnswering = () => {
     if (!currentQuestion) return;
@@ -179,7 +210,7 @@ const QuizScreenPage = () => {
                   Question {gameState.questionIndex + 1}
                 </CardTitle>
                 <div className="text-xs text-center text-gray-500">
-                  Debug: Status={gameState.status}, Index={gameState.questionIndex}, Connected={isConnected ? 'Yes' : 'No'}
+                  Room: {roomId} | User: {userId.substring(0, 8)}... | Status: {gameState.status} | Connected: {isConnected ? 'Yes' : 'No'}
                 </div>
               </CardHeader>
               <CardContent className="p-2">
@@ -254,6 +285,8 @@ const QuizScreenPage = () => {
           )}
         </div>
       </main>
+      
+      <DatabaseViewer />
     </div>
   );
 };
