@@ -36,7 +36,7 @@ export default function LoginButton() {
   return (
     <button
       onClick={handleLogin}
-      className="rounded bg-blue-600 px-6 py-4 text-white"
+      className="rounded bg-blue-600 px-6 py-4 text-white w-full transition-all hover:scale-105 hover:bg-blue-500"
     >
       ログイン
     </button>
