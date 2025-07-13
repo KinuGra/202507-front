@@ -45,6 +45,7 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
   const queryRoomId = searchParams.get("roomId");
   const [roomId, setRoomId] = useState(queryRoomId || initialRoomId || "");
   const [participants, setParticipants] = useState<User[]>([]);
+  const [copied, setCopied] = useState(false);
 
   // ルームID変化に対応
   useEffect(() => {
@@ -159,10 +160,14 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
           <div className="flex items-center space-x-2">
             <Input id="room-id" value={roomId} readOnly />
             <Button
-              onClick={() => navigator.clipboard.writeText(roomId)}
+              onClick={() => {
+                navigator.clipboard.writeText(roomId);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1000);
+              }}
               disabled={!isHost}
             >
-              IDをコピー
+              {copied ? "ID copied" : "IDをコピー"}
             </Button>
           </div>
         </div>
