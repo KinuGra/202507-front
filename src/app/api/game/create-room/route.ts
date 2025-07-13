@@ -33,7 +33,12 @@ export async function POST(req: Request) {
             createdRoom = await res.json();
         }
     } catch (e) {
-        return NextResponse.json({ message: "ルーム作成失敗", error: String(e) }, { status: 500 });
+        console.error('Django connection error:', e);
+        return NextResponse.json({ 
+            message: "ルーム作成失敗 - Djangoサーバーに接続できません", 
+            error: String(e),
+            djangoUrl 
+        }, { status: 500 });
     }
 
     // 全件GETしてroomId一致のものを検索

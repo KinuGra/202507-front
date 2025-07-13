@@ -195,7 +195,7 @@ export function RoomDetails({ isHost, initialRoomId }: RoomDetailsProps) {
           <Button variant="outline">キャンセル</Button>
         </Link>
         {isHost && (
-          <Link href={`/quizScreen?roomid=${roomId}`}>
+          <Link href={`/quizScreen?roomId=${roomId}`}>
             <Button>スタート</Button>
           </Link>
         )}
