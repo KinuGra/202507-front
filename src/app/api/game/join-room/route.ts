@@ -28,7 +28,11 @@ export async function POST(req: Request) {
         await fetch(`${djangoUrl}/api/quiz/join/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ roomId, userUuid: uuid })
+            body: JSON.stringify({ 
+                roomId, 
+                userUuid: uuid,
+                username: username || 'Guest User'
+            })
         });
     } catch (error) {
         console.error('Failed to join room in Django:', error);
